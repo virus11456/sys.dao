@@ -34,6 +34,7 @@ export default function App() {
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathCount, setBreathCount] = useState(0);
   const [breathToast, setBreathToast] = useState({ visible: false, count: 0 });
+  const [expandedDay, setExpandedDay] = useState(null); // 往日 tab 的展開列 dateStr
   const [showBreath, setShowBreath] = useState(false);
   const [todayLog, setTodayLog] = useState({ drymouth: null, energy: null, sleep: null, notes: '' });
   const [glitchText, setGlitchText] = useState('');
@@ -1121,7 +1122,8 @@ export default function App() {
             {[
               { id: 'today', label: '今日', en: 'SYS' },
               { id: 'breath', label: '吐納', en: 'QI' },
-              { id: 'log', label: '心覺', en: 'LOG' }
+              { id: 'log', label: '心覺', en: 'LOG' },
+              { id: 'past', label: '往日', en: 'PAST' }
             ].map(t => (
               <button
                 key={t.id}
@@ -2104,6 +2106,222 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* 往日 TAB —— 翻閱過往紀錄 */}
+      {activeTab === 'past' && (() => {
+        // 從 localStorage 收集所有 cyber3_log_* / cyber3_completed_* 紀錄
+        const days = {};
+        try {
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const k = window.localStorage.key(i);
+            if (!k) continue;
+            const logMatch = k.match(/^cyber3_log_(.+)$/);
+            const cmpMatch = k.match(/^cyber3_completed_(.+)$/);
+            if (logMatch) {
+              const ds = logMatch[1];
+              const v = window.localStorage.getItem(k);
+              if (v) {
+                try { days[ds] = { ...(days[ds] || {}), log: JSON.parse(v) }; } catch (e) {}
+              }
+            } else if (cmpMatch) {
+              const ds = cmpMatch[1];
+              const v = window.localStorage.getItem(k);
+              if (v) {
+                try { days[ds] = { ...(days[ds] || {}), completed: JSON.parse(v) }; } catch (e) {}
+              }
+            }
+          }
+        } catch (e) {}
+
+        const totalTasks = schedule.length;
+        const list = Object.entries(days).map(([ds, d]) => {
+          const date = new Date(ds);
+          const completedCount = d.completed ? Object.values(d.completed).filter(Boolean).length : 0;
+          const log = d.log || {};
+          const notes = log.notes || '';
+          const hasAnyData = completedCount > 0 || log.drymouth !== null && log.drymouth !== undefined ||
+                             log.energy !== null && log.energy !== undefined ||
+                             log.sleep !== null && log.sleep !== undefined ||
+                             notes.trim().length > 0;
+          return {
+            ds,
+            date,
+            time: isNaN(date.getTime()) ? 0 : date.getTime(),
+            mmdd: isNaN(date.getTime()) ? ds : `${date.getMonth() + 1}/${date.getDate()}`,
+            weekday: isNaN(date.getTime()) ? '' : ['日', '一', '二', '三', '四', '五', '六'][date.getDay()],
+            completedCount,
+            completionPct: Math.round((completedCount / totalTasks) * 100),
+            log,
+            notes,
+            hasAnyData,
+          };
+        }).filter(r => r.hasAnyData).sort((a, b) => b.time - a.time);
+
+        // 統計：總天數、平均完成率、平均精神
+        const validEnergyDays = list.filter(r => r.log.energy !== null && r.log.energy !== undefined);
+        const avgEnergy = validEnergyDays.length
+          ? (validEnergyDays.reduce((s, r) => s + r.log.energy, 0) / validEnergyDays.length).toFixed(1)
+          : '—';
+        const avgCompletion = list.length
+          ? Math.round(list.reduce((s, r) => s + r.completionPct, 0) / list.length)
+          : 0;
+
+        // 顏色判定
+        const completionColor = (p) => p >= 80 ? '#00ffd4' : p >= 50 ? '#ffaa00' : p > 0 ? '#ff00aa' : 'rgba(232,223,255,0.2)';
+        const energyColor = (v) => v == null ? 'rgba(232,223,255,0.2)' : v >= 3 ? '#00ffd4' : v >= 2 ? '#ffaa00' : '#ff00aa';
+        const sleepColor = (v) => v == null ? 'rgba(232,223,255,0.2)' : v >= 3 ? '#00ffd4' : v >= 2 ? '#ffaa00' : '#ff00aa';
+        const dryColor = (v) => v == null ? 'rgba(232,223,255,0.2)' : v <= 0 ? '#00ffd4' : v <= 1 ? '#ffaa00' : '#ff00aa';
+
+        return (
+          <div className="px-4 sm:px-5 md:px-6 lg:px-8 py-5 pb-24 space-y-5 max-w-7xl mx-auto w-full">
+            <div>
+              <div className="f-cyber text-[10px] tracking-[0.4em] neon-cyan">PAST.LOG.ARCHIVE</div>
+              <h2 className="f-serif-black text-5xl md:text-6xl lg:text-7xl tracking-widest mt-3 ink-glow-cyan">往日觀照</h2>
+              <div className="f-wenkai text-sm mt-3 italic opacity-70">
+                {'>'} 翻閱過往紀錄 · 觀身心之變
+              </div>
+            </div>
+
+            {/* 三項統計總覽 */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="terminal-card cyber-border-small p-3 text-center">
+                <div className="f-cyber text-[9px] tracking-[0.3em] neon-cyan">DAYS.LOGGED</div>
+                <div className="f-cyber text-3xl font-black tabular-nums mt-1 neon-cyan-strong">
+                  {String(list.length).padStart(2, '0')}
+                </div>
+                <div className="f-sans-light text-[10px] opacity-50 mt-1">紀錄天數</div>
+              </div>
+              <div className="terminal-card cyber-border-small p-3 text-center">
+                <div className="f-cyber text-[9px] tracking-[0.3em] neon-pink">AVG.COMPLETE</div>
+                <div className="f-cyber text-3xl font-black tabular-nums mt-1 neon-pink-strong">
+                  {avgCompletion}<span className="text-base opacity-60">%</span>
+                </div>
+                <div className="f-sans-light text-[10px] opacity-50 mt-1">平均完成</div>
+              </div>
+              <div className="terminal-card cyber-border-small p-3 text-center">
+                <div className="f-cyber text-[9px] tracking-[0.3em]" style={{ color: '#ffaa00' }}>AVG.ENERGY</div>
+                <div className="f-cyber text-3xl font-black tabular-nums mt-1" style={{ color: '#ffaa00', textShadow: '0 0 10px #ffaa0066' }}>
+                  {avgEnergy}<span className="text-base opacity-60">/3</span>
+                </div>
+                <div className="f-sans-light text-[10px] opacity-50 mt-1">平均精神</div>
+              </div>
+            </div>
+
+            {/* 往日列表 */}
+            {list.length === 0 ? (
+              <div className="terminal-card cyber-border p-8 text-center">
+                <div className="f-serif-black text-4xl ink-glow-cyan opacity-50 mb-3">空</div>
+                <div className="f-sans-light text-sm opacity-60">尚無往日紀錄</div>
+                <div className="f-wenkai text-xs mt-2 opacity-40">完成第一日修煉後，此處將顯示時光足跡</div>
+              </div>
+            ) : (
+              <div className="terminal-card cyber-border p-4">
+                <div className="f-cyber text-[10px] tracking-[0.3em] mb-3 neon-cyan">
+                  ◢ <span className="f-sans-black" style={{ fontSize: '11px' }}>時光足跡</span> · TIMELINE
+                </div>
+                <div className="space-y-2">
+                  {list.map((row) => {
+                    const isOpen = expandedDay === row.ds;
+                    return (
+                      <div key={row.ds} className="cyber-border-small overflow-hidden" style={{
+                        background: isOpen ? 'rgba(0, 255, 212, 0.04)' : 'rgba(20, 10, 35, 0.4)',
+                        border: `1px solid ${isOpen ? 'rgba(0, 255, 212, 0.4)' : 'rgba(0, 255, 212, 0.12)'}`,
+                        transition: 'all 0.25s ease',
+                      }}>
+                        <button
+                          onClick={() => setExpandedDay(isOpen ? null : row.ds)}
+                          className="w-full p-3 flex items-center gap-3 text-left hover:bg-white/5 transition-colors"
+                        >
+                          {/* 日期 */}
+                          <div className="shrink-0 text-center" style={{ minWidth: '52px' }}>
+                            <div className="f-cyber text-lg font-bold tabular-nums" style={{ color: '#e8dfff' }}>{row.mmdd}</div>
+                            <div className="f-sans-light text-[10px] opacity-50">週{row.weekday}</div>
+                          </div>
+
+                          {/* 完成度進度條 */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline justify-between mb-1">
+                              <span className="f-cyber text-[9px] tracking-widest opacity-60">DONE</span>
+                              <span className="f-cyber text-[10px] tabular-nums" style={{ color: completionColor(row.completionPct) }}>
+                                {row.completedCount}/{totalTasks} · {row.completionPct}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(232,223,255,0.08)' }}>
+                              <div className="h-full rounded-full transition-all" style={{
+                                width: `${row.completionPct}%`,
+                                background: completionColor(row.completionPct),
+                                boxShadow: `0 0 6px ${completionColor(row.completionPct)}88`,
+                              }} />
+                            </div>
+                          </div>
+
+                          {/* 三指標小圓點 */}
+                          <div className="shrink-0 flex items-center gap-1.5" title="渴 · 氣 · 眠">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ background: dryColor(row.log.drymouth), boxShadow: `0 0 4px ${dryColor(row.log.drymouth)}` }} />
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ background: energyColor(row.log.energy), boxShadow: `0 0 4px ${energyColor(row.log.energy)}` }} />
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ background: sleepColor(row.log.sleep), boxShadow: `0 0 4px ${sleepColor(row.log.sleep)}` }} />
+                          </div>
+
+                          {/* 展開箭頭 */}
+                          <div className="f-cyber text-xs opacity-40 transition-transform" style={{
+                            transform: isOpen ? 'rotate(90deg)' : 'rotate(0)',
+                          }}>▸</div>
+                        </button>
+
+                        {/* 展開內容 */}
+                        {isOpen && (
+                          <div className="px-3 pb-3 pt-1 border-t" style={{ borderColor: 'rgba(0,255,212,0.15)' }}>
+                            <div className="grid grid-cols-3 gap-2 mt-3">
+                              {[
+                                { key: 'drymouth', kanji: '渴', en: 'THIRST', label: ['無','微','中','甚'], color: dryColor(row.log.drymouth) },
+                                { key: 'energy', kanji: '氣', en: 'ENERGY', label: ['竭','倦','可','盈'], color: energyColor(row.log.energy) },
+                                { key: 'sleep', kanji: '眠', en: 'SLEEP', label: ['失','淺','可','深'], color: sleepColor(row.log.sleep) },
+                              ].map(m => {
+                                const v = row.log[m.key];
+                                return (
+                                  <div key={m.key} className="cyber-border-small p-2 text-center" style={{
+                                    background: 'rgba(20, 10, 35, 0.6)',
+                                    border: `1px solid ${m.color}33`,
+                                  }}>
+                                    <div className="f-serif-black text-xl" style={{ color: m.color, lineHeight: 1 }}>{m.kanji}</div>
+                                    <div className="f-cyber text-[8px] tracking-widest opacity-50 mt-1">{m.en}</div>
+                                    <div className="f-sans-black text-sm mt-1" style={{ color: m.color }}>
+                                      {v == null ? '—' : (m.label[v] || v)}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {row.notes && row.notes.trim() && (
+                              <div className="mt-3 p-3 cyber-border-small" style={{
+                                background: 'rgba(255, 0, 170, 0.04)',
+                                border: '1px solid rgba(255, 0, 170, 0.2)',
+                              }}>
+                                <div className="f-cyber text-[9px] tracking-[0.3em] mb-1 neon-pink">▸ NOTES · 舌象備註</div>
+                                <p className="f-wenkai text-xs leading-relaxed" style={{ color: '#e8dfff' }}>{row.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 隱私小提示 */}
+            <div className="cyber-border-small p-3 text-center" style={{
+              background: 'rgba(0, 255, 212, 0.03)', border: '1px solid rgba(0, 255, 212, 0.15)'
+            }}>
+              <div className="f-wenkai text-[11px] opacity-50" style={{ color: '#e8dfff' }}>
+                ◯ 所有紀錄存於本機瀏覽器 · 清除快取則資料清空
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
