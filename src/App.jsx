@@ -1561,12 +1561,17 @@ export default function App() {
           </div>
           
           <div className="terminal-card cyber-border p-5 relative">
-            <div className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center talisman cyber-border-small" style={{
-              borderColor: '#ff00aa'
+            {/* 傳承印章：放右上角；用 inline style 強制 absolute 覆蓋 .talisman 的 position:relative */}
+            <div className="w-10 h-10 flex items-center justify-center talisman cyber-border-small" style={{
+              borderColor: '#ff00aa',
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              zIndex: 2,
             }}>
               <span className="f-serif-black text-lg ink-glow-pink">傳</span>
             </div>
-            <div className="f-cyber text-[10px] tracking-[0.3em] mb-3 neon-cyan">
+            <div className="f-cyber text-[10px] tracking-[0.3em] mb-3 neon-cyan pr-12">
               ◢ INIT.PHASE.01
             </div>
             <div className="space-y-2">
