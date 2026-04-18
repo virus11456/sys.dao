@@ -235,12 +235,14 @@ export default function App() {
     const m = now.getMonth() + 1;
     const d = now.getDate();
     const current = m * 100 + d;
-    let result = solarTerms[solarTerms.length - 1]; // 預設大寒
-    for (let i = 0; i < solarTerms.length; i++) {
-      const term = solarTerms[i];
+    // 原 solarTerms 為農曆序（立春開頭、大寒結尾）；改成西曆序：小寒 → 大寒 → 立春 → ... → 冬至
+    // 否則 4 月走訪會被尾端的 小寒/大寒 覆寫成冬季節氣
+    const ordered = [...solarTerms.slice(-2), ...solarTerms.slice(0, -2)];
+    // 1/1 ~ 1/5 還在前一年的「冬至」延續
+    let result = ordered[ordered.length - 1]; // 冬至
+    for (const term of ordered) {
       const termDate = term.start[0] * 100 + term.start[1];
       if (current >= termDate) result = term;
-      else if (i === 0 && current < termDate) { result = solarTerms[solarTerms.length - 1]; break; }
     }
     return result;
   };
