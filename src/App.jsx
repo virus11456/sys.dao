@@ -541,25 +541,25 @@ export default function App() {
         }
         .f-serif-black {
           /* 古典墨寶宋體：冷峻、鋒利、有鐵畫銀鉤之氣 */
-          font-family: 'Cactus Classical Serif', 'LXGW Bright', 'Noto Serif TC', serif;
+          font-family: 'Cactus Classical Serif', 'Noto Serif TC', serif;
           font-weight: 900;
           letter-spacing: 0.06em;
           font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-sans-black {
-          /* Chiron Hei HK：香港黑體現代版，矩形骨架、銳利轉角 */
-          font-family: 'Chiron Hei HK Bold', 'Chiron Hei HK', 'Noto Sans TC', sans-serif;
+          /* Noto Sans HK：香港黑體字形，比 TC 更方正銳利 */
+          font-family: 'Noto Sans HK', 'Noto Sans TC', sans-serif;
           font-weight: 900;
           letter-spacing: 0.03em;
           font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-sans {
-          font-family: 'Chiron Hei HK', 'Noto Sans TC', sans-serif;
+          font-family: 'Noto Sans HK', 'Noto Sans TC', sans-serif;
           font-weight: 500;
           font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-sans-light {
-          font-family: 'Chiron Hei HK', 'Noto Sans TC', sans-serif;
+          font-family: 'Noto Sans HK', 'Noto Sans TC', sans-serif;
           font-weight: 300;
           font-feature-settings: 'halt' 1, 'vpal' 1;
         }
