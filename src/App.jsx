@@ -1475,7 +1475,7 @@ export default function App() {
 
                     {/* 漢字 */}
                     <div className="shrink-0 w-14 flex flex-col items-center">
-                      <div className="w-12 h-12 flex items-center justify-center relative cyber-border-small talisman" style={{
+                      <div className="w-12 h-12 flex items-center justify-center cyber-border-small talisman" style={{
                         borderColor: `${ringColor}66`,
                       }}>
                         <span className="f-serif-black text-3xl" style={{
@@ -1483,13 +1483,6 @@ export default function App() {
                           textShadow: isDone ? `0 0 10px ${ringColor}, 0 0 20px ${ringColor}66` : 'none',
                           lineHeight: 1
                         }}>{s.kanji}</span>
-                        {!isDone && (
-                          <div className="absolute -bottom-1 -right-1 text-[8px] f-cyber px-1 tabular-nums font-bold" style={{
-                            background: '#ffee00', color: '#0a0612', boxShadow: '0 0 6px rgba(255, 238, 0, 0.6)'
-                          }}>
-                            +{s.xp}
-                          </div>
-                        )}
                       </div>
                       <div className="f-cyber text-[8px] tracking-widest mt-1 opacity-60">{s.code}</div>
                     </div>
@@ -1513,8 +1506,19 @@ export default function App() {
                       <div className="f-wenkai text-sm" style={{ color: '#b5a8d9' }}>{s.subtitle}</div>
                     </div>
 
-                    <div onClick={(e) => { e.stopPropagation(); toggleComplete(s.id); }}
-                      className={`cyber-checkbox shrink-0 ${isDone ? 'done' : ''}`} />
+                    {/* checkbox + XP badge stacked，避免徽章覆蓋漢字 */}
+                    <div className="shrink-0 flex flex-col items-center gap-1.5 self-center">
+                      <div onClick={(e) => { e.stopPropagation(); toggleComplete(s.id); }}
+                        className={`cyber-checkbox ${isDone ? 'done' : ''}`} />
+                      {!isDone && (
+                        <span className="f-cyber text-[9px] tabular-nums font-bold opacity-70" style={{
+                          color: '#ffee00',
+                          textShadow: '0 0 4px rgba(255, 238, 0, 0.4)',
+                        }}>
+                          +{s.xp}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {isExpanded && (
