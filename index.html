@@ -6,8 +6,57 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="sys.dao — cyber daily operating system" />
     <title>sys.dao</title>
+
+    <!-- 字體預連線（縮短 handshake） -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://chinese-fonts-cdn.deno.dev" crossorigin />
+
+    <!-- Google Fonts：中文標題 (Cactus Classical Serif 古典墨寶宋)、英文顯示 (Chakra Petch 賽博)、
+         中文回退 (Noto Serif TC / Noto Sans TC)、等寬 (JetBrains Mono)、次級英文 (Orbitron / Rajdhani) -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cactus+Classical+Serif&family=Chakra+Petch:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Noto+Serif+TC:wght@400;500;600;700;900&family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap"
+    />
+
+    <!-- 第三方中文字：Chiron Hei HK（香港黑體，內文）+ LXGW Bright（霞鶩卿雲，備用標題） -->
+    <link
+      rel="stylesheet"
+      href="https://chinese-fonts-cdn.deno.dev/packages/chiron-hei-hk/dist/ChironHeiHK-Regular/result.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://chinese-fonts-cdn.deno.dev/packages/chiron-hei-hk/dist/ChironHeiHK-Bold/result.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://chinese-fonts-cdn.deno.dev/packages/lxgwbright/dist/LXGWBright-Regular/result.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://chinese-fonts-cdn.deno.dev/packages/lxgwwenkai/dist/LXGWWenKai-Regular/result.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://chinese-fonts-cdn.deno.dev/packages/lxgwwenkai/dist/LXGWWenKai-Bold/result.css"
+    />
+
     <style>
-      html, body, #root { margin: 0; padding: 0; min-height: 100%; background: #000; color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        background: #000;
+        color: #fff;
+        font-family:
+          'Chiron Hei HK', 'Noto Sans TC',
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        /* OpenType：tabular 數字對齊、中文標點壓縮、視覺對齊 */
+        font-feature-settings: 'tnum' 1, 'halt' 1, 'vpal' 1, 'palt' 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
       *, *::before, *::after { box-sizing: border-box; }
     </style>
   </head>

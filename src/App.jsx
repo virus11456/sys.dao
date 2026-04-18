@@ -316,7 +316,7 @@ export default function App() {
     { id: 'water', time: '06:40', kanji: '水', code: 'H2O', title: '晨起溫水', subtitle: '三百毫升・四十度', meridian: '卯時 / 大腸經', duration: 10, ring: 'fluid',
       detail: '溫開水加二片薑或一顆紅棗。小口慢飲。避免冰水、果汁、咖啡。', xp: 10 },
     { id: 'morning', time: '07:00', kanji: '朝', code: 'QI.BOOT', title: '晨間練功', subtitle: '八段錦・吐納・站樁', meridian: '辰時 / 胃經', duration: 30, key: true, ring: 'yang',
-      detail: '【十分】八段錦三式\n【十分】素門吐納呼吸法\n【十分】舌抵上顎站樁', timer: 1800, hasBreath: true, xp: 40 },
+      detail: '【十分】八段錦三式\n【十分】上古煉氣呼吸法\n【十分】舌抵上顎站樁', timer: 1800, hasBreath: true, xp: 40 },
     { id: 'breakfast', time: '07:30', kanji: '膳', code: 'FEED.AM', title: `養陰早餐・${todayMenu.theme}`, subtitle: todayMenu.am.split(' + ')[0], meridian: '辰時 / 胃經', duration: 30, ring: 'yin',
       detail: `【今日主題】${todayMenu.theme}（${currentTerm.name}節氣）\n\n${todayMenu.am}\n\n【節氣調理】${currentTerm.focus}\n【食材原則】${currentTerm.foods}`, xp: 15 },
     { id: 'work_am', time: '09:00', kanji: '勤', code: 'WORK.PEAK', title: '高效工作', subtitle: '巳時創造力高峰', meridian: '巳時 / 脾經', duration: 120, ring: 'yang',
@@ -336,7 +336,7 @@ export default function App() {
     { id: 'foot', time: '20:00', kanji: '湯', code: 'FLUSH', title: '泡腳搓湧泉', subtitle: '引火歸元', meridian: '戌時 / 心包經', duration: 30, ring: 'yin',
       detail: '四十度溫水泡腳十五分鐘。泡完搓湧泉穴各一百下。', timer: 900, xp: 20 },
     { id: 'night', time: '21:00', kanji: '禪', code: 'MEDIT.X', title: '睡前禪修', subtitle: '吐納・玉液還丹・靜坐', meridian: '亥時 / 三焦經', duration: 30, key: true, ring: 'yin',
-      detail: '【十五分】素門吐納\n【十分】玉液還丹\n【五分】收功靜坐', timer: 1800, hasBreath: true, xp: 40 },
+      detail: '【十五分】上古煉氣\n【十分】玉液還丹\n【五分】收功靜坐', timer: 1800, hasBreath: true, xp: 40 },
     { id: 'prep', time: '22:00', kanji: '寢', code: 'PREP.OFF', title: '寢前準備', subtitle: '關三C・床頭溫水', meridian: '亥時 / 三焦經', duration: 30, ring: 'yin',
       detail: '關閉三C螢幕。床頭放溫開水。房間調暗。可聽古琴頌缽。', xp: 10 },
     { id: 'sleep', time: '22:30', kanji: '寂', code: 'NULL', title: '入定', subtitle: '★ 最高優先級', meridian: '子時 / 膽經', duration: 0, key: true, critical: true, ring: 'yin',
@@ -526,54 +526,65 @@ export default function App() {
       color: '#e8dfff',
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@300;400;500;700;800&family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
-        @import url('https://chinese-fonts-cdn.deno.dev/packages/lxgwwenkai/dist/LXGWWenKai-Regular/result.css');
-        @import url('https://chinese-fonts-cdn.deno.dev/packages/lxgwwenkai/dist/LXGWWenKai-Bold/result.css');
-        
-        /* 字體體系 */
+        /* 字體 link 在 index.html 統一載入（preconnect + Google Fonts + chinese-fonts-cdn） */
+
+        /* 字體體系 v2 — 古典墨寶 × 賽博龐克 */
         .f-wenkai {
-          font-family: 'LXGW WenKai', 'Noto Serif TC', serif;
+          font-family: 'LXGW WenKai', 'Cactus Classical Serif', 'Noto Serif TC', serif;
           font-weight: 400;
+          font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-wenkai-bold {
-          font-family: 'LXGW WenKai Bold', 'LXGW WenKai', 'Noto Serif TC', serif;
+          font-family: 'LXGW WenKai Bold', 'LXGW WenKai', 'Cactus Classical Serif', 'Noto Serif TC', serif;
           font-weight: 700;
+          font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-serif-black {
-          font-family: 'Noto Serif TC', serif;
+          /* 古典墨寶宋體：冷峻、鋒利、有鐵畫銀鉤之氣 */
+          font-family: 'Cactus Classical Serif', 'LXGW Bright', 'Noto Serif TC', serif;
           font-weight: 900;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.06em;
+          font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-sans-black {
-          font-family: 'Noto Sans TC', sans-serif;
+          /* Chiron Hei HK：香港黑體現代版，矩形骨架、銳利轉角 */
+          font-family: 'Chiron Hei HK Bold', 'Chiron Hei HK', 'Noto Sans TC', sans-serif;
           font-weight: 900;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.03em;
+          font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-sans {
-          font-family: 'Noto Sans TC', sans-serif;
+          font-family: 'Chiron Hei HK', 'Noto Sans TC', sans-serif;
           font-weight: 500;
+          font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-sans-light {
-          font-family: 'Noto Sans TC', sans-serif;
+          font-family: 'Chiron Hei HK', 'Noto Sans TC', sans-serif;
           font-weight: 300;
+          font-feature-settings: 'halt' 1, 'vpal' 1;
         }
         .f-cyber {
-          font-family: 'Orbitron', sans-serif;
+          /* Chakra Petch：賽博龐克招牌，有稜有角 */
+          font-family: 'Chakra Petch', 'Orbitron', sans-serif;
           font-weight: 700;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.1em;
+          font-feature-settings: 'tnum' 1;
         }
         .f-cyber-light {
-          font-family: 'Rajdhani', 'Orbitron', sans-serif;
+          font-family: 'Chakra Petch', 'Rajdhani', sans-serif;
           font-weight: 500;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.18em;
+          font-feature-settings: 'tnum' 1;
         }
         .f-mono {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
           font-weight: 400;
+          font-feature-settings: 'tnum' 1, 'zero' 1, 'ss02' 1;
         }
         .f-mono-bold {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
           font-weight: 700;
+          font-feature-settings: 'tnum' 1, 'zero' 1, 'ss02' 1;
         }
         
         /* 故障效果 */
@@ -1497,7 +1508,7 @@ export default function App() {
         <div className="px-4 sm:px-5 md:px-6 lg:px-8 py-5 pb-24 max-w-7xl mx-auto w-full">
           <div className="text-center mb-2">
             <div className="f-cyber text-[10px] tracking-[0.4em] neon-cyan">QI.BREATHING.PROTOCOL</div>
-            <h2 className="f-serif-black text-5xl md:text-6xl lg:text-7xl tracking-widest mt-3 ink-glow-pink">素門吐納</h2>
+            <h2 className="f-serif-black text-5xl md:text-6xl lg:text-7xl tracking-widest mt-3 ink-glow-pink">上古煉氣</h2>
             <div className="f-wenkai text-sm mt-3 italic opacity-70">
               {'>'} 陰虛者淺試即可・不到極限
             </div>
@@ -1625,9 +1636,9 @@ export default function App() {
                   <span className="f-serif-black text-3xl ink-glow-pink">炁</span>
                 </div>
                 <div className="flex-1">
-                  <div className="f-sans-black text-lg">素門吐納法</div>
+                  <div className="f-sans-black text-lg">上古煉氣呼吸法</div>
                   <div className="f-wenkai text-xs opacity-70 mt-0.5">
-                    以《黃帝內經》為綱領、上古修秘傳承氣法，以返還先天一氣為要義。
+                    出自《黃帝內經·素問篇》上古天真論「呼吸精氣，獨立守神」一語，返還先天一氣為要義。
                   </div>
                 </div>
               </div>
@@ -1642,7 +1653,7 @@ export default function App() {
                 {[
                   { 
                     num: '01', kanji: '返', title: '返先天一氣',
-                    detail: '後天呼吸皆入肺，浮於胸膈；上古吐納則直貫丹田，返歸先天一氣。一氣既充，五臟自調，心方能安然喜樂。'
+                    detail: '後天呼吸皆入肺，浮於胸膈；上古煉氣則直貫丹田，返歸先天一氣。一氣既充，五臟自調，心方能安然喜樂。'
                   },
                   { 
                     num: '02', kanji: '凝', title: '凝神入炁穴',
@@ -1650,7 +1661,7 @@ export default function App() {
                   },
                   { 
                     num: '03', kanji: '順', title: '順其自然',
-                    detail: '素門吐納為自然法，無須嚴格遵循步驟，將心念放在吐納的方法本身，無需額外觀想。循序漸進，以突破自我為根本。'
+                    detail: '上古煉氣為自然法，無須嚴格遵循步驟，將心念放在呼吸本身，無需額外觀想。循序漸進，以突破自我為根本。'
                   },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 p-3 cyber-border-small" style={{
@@ -1679,7 +1690,7 @@ export default function App() {
                 background: 'rgba(0, 255, 212, 0.05)', border: '1px solid rgba(0, 255, 212, 0.3)'
               }}>
                 <div className="f-serif-black text-4xl ink-glow-cyan mb-2" style={{ lineHeight: 1 }}>古</div>
-                <div className="f-sans-black text-sm">上古吐納法</div>
+                <div className="f-sans-black text-sm">上古煉氣法</div>
                 <div className="f-cyber text-[9px] tracking-widest opacity-60 mt-1">ANCIENT.METHOD</div>
               </div>
               <div className="cyber-border-small p-3 text-center" style={{
@@ -1756,7 +1767,7 @@ export default function App() {
             }}>
               <div className="f-cyber text-[9px] tracking-[0.3em] mb-2 neon-yellow">▸ 結論 · VERDICT</div>
               <p className="f-wenkai text-xs leading-relaxed" style={{ color: '#e8dfff' }}>
-                上古吐納法以「返璞歸真」為要義，不主張意守觀察，不追求氣機走向，只管呼吸本身。此法勝在安全自然，陰虛者、初學者皆可修持。周天功法精深玄妙，然非明師親授切勿妄練，否則易生偏差。
+                上古煉氣法以「返璞歸真」為要義，不主張意守觀察，不追求氣機走向，只管呼吸本身。此法勝在安全自然，陰虛者、初學者皆可修持。周天功法精深玄妙，然非明師親授切勿妄練，否則易生偏差。
                 <span className="neon-yellow">修行之道，寧簡而正，勿繁而亂。</span>
               </p>
             </div>
@@ -1809,7 +1820,7 @@ export default function App() {
               ◢ <span className="f-sans-black" style={{ fontSize: '11px' }}>修行效驗</span> · PROGRESS
             </div>
             <div className="f-wenkai text-xs opacity-70 mb-4">
-              {'>'} 素門吐納初期效驗為療疾排毒，體內濕毒以及汙濁之氣會逐步排出，皆數正常現象
+              {'>'} 上古煉氣初期效驗為療疾排毒，體內濕毒以及汙濁之氣會逐步排出，皆數正常現象
             </div>
 
             <div className="relative pl-6 space-y-4">
