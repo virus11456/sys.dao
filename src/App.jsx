@@ -33,6 +33,7 @@ export default function App() {
   const [timerLabel, setTimerLabel] = useState('');
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathCount, setBreathCount] = useState(0);
+  const [breathToast, setBreathToast] = useState({ visible: false, count: 0 });
   const [showBreath, setShowBreath] = useState(false);
   const [todayLog, setTodayLog] = useState({ drymouth: null, energy: null, sleep: null, notes: '' });
   const [glitchText, setGlitchText] = useState('');
@@ -140,6 +141,15 @@ export default function App() {
       return () => clearInterval(cycle);
     }
   }, [showBreath]);
+
+  // 每成一息，中央薄霧 toast「◯ 第 N 息成」淡入淡出兩秒
+  useEffect(() => {
+    if (breathCount > 0 && showBreath) {
+      setBreathToast({ visible: true, count: breathCount });
+      const t = setTimeout(() => setBreathToast(prev => ({ ...prev, visible: false })), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [breathCount, showBreath]);
 
   useEffect(() => {
     const chars = '道氣陰陽坎離震巽乾兌艮坤太極無極玄靈炁神精修真01';
@@ -587,6 +597,74 @@ export default function App() {
           font-feature-settings: 'tnum' 1, 'zero' 1, 'ss02' 1;
         }
         
+        /* ===== 上古煉氣 · idle + phase-tick + toast（禪意輕量系） ===== */
+        /* 閒置時「氣」字緩緩呼吸 —— 6 秒一息，像活著但安靜 */
+        @keyframes idle-breath {
+          0%, 100% { transform: scale(1); opacity: 0.88; }
+          50%      { transform: scale(1.04); opacity: 1; }
+        }
+        .idle-breath {
+          animation: idle-breath 6s ease-in-out infinite;
+          will-change: transform, opacity;
+        }
+
+        /* 每相 4 秒倒數環 —— stroke-dashoffset 從 circumference 降到 0 */
+        @keyframes phase-tick {
+          from { stroke-dashoffset: 565.48; }  /* 2πr，r=90 */
+          to   { stroke-dashoffset: 0; }
+        }
+        .phase-tick {
+          animation: phase-tick 4s linear;
+          animation-fill-mode: forwards;
+        }
+
+        /* 完成一息 · 薄霧 toast（中央淡入淡出兩秒）*/
+        @keyframes toast-mist {
+          0%   { opacity: 0; transform: translateY(10px) scale(0.96); filter: blur(8px); }
+          15%  { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+          75%  { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+          100% { opacity: 0; transform: translateY(-6px) scale(1.02); filter: blur(6px); }
+        }
+        .toast-mist { animation: toast-mist 2s ease-out forwards; }
+
+        /* 主按鈕 —— 柔和脈衝光暈（取代原本的硬邊 neon） */
+        @keyframes btn-aura {
+          0%, 100% { box-shadow: 0 0 12px rgba(0, 255, 212, 0.25), inset 0 0 12px rgba(0, 255, 212, 0.08); }
+          50%      { box-shadow: 0 0 24px rgba(0, 255, 212, 0.45), inset 0 0 18px rgba(0, 255, 212, 0.15); }
+        }
+        .btn-qi-begin {
+          background: linear-gradient(180deg, rgba(0, 255, 212, 0.12) 0%, rgba(0, 255, 212, 0.04) 100%);
+          border: 1px solid rgba(0, 255, 212, 0.45);
+          color: #00ffd4;
+          animation: btn-aura 3.2s ease-in-out infinite;
+          transition: all 0.3s ease;
+        }
+        .btn-qi-begin:hover {
+          background: linear-gradient(180deg, rgba(0, 255, 212, 0.2) 0%, rgba(0, 255, 212, 0.06) 100%);
+          border-color: rgba(0, 255, 212, 0.8);
+          transform: translateY(-1px);
+        }
+        .btn-qi-end {
+          background: linear-gradient(180deg, rgba(255, 0, 170, 0.1) 0%, rgba(255, 0, 170, 0.04) 100%);
+          border: 1px solid rgba(255, 0, 170, 0.45);
+          color: #ff00aa;
+          transition: all 0.3s ease;
+        }
+        .btn-qi-end:hover {
+          background: linear-gradient(180deg, rgba(255, 0, 170, 0.18) 0%, rgba(255, 0, 170, 0.06) 100%);
+          border-color: rgba(255, 0, 170, 0.8);
+        }
+        .btn-qi-reset {
+          background: transparent;
+          border: 1px solid rgba(232, 223, 255, 0.2);
+          color: rgba(232, 223, 255, 0.6);
+          transition: all 0.3s ease;
+        }
+        .btn-qi-reset:hover {
+          border-color: rgba(232, 223, 255, 0.45);
+          color: rgba(232, 223, 255, 0.9);
+        }
+
         /* 故障效果 */
         @keyframes glitch {
           0%, 100% { transform: translate(0, 0); filter: hue-rotate(0deg); }
@@ -1552,40 +1630,105 @@ export default function App() {
             <div className="absolute inset-0 flex items-center justify-center">
               <svg width="280" height="280" viewBox="0 0 200 200" className="transition-transform duration-[4000ms] ease-in-out"
                 style={{ transform: showBreath ? `scale(${breathLabels[breathPhase].scale})` : 'scale(1)' }}>
+                {/* 外環：靜態邊界 */}
                 <circle cx="100" cy="100" r="90" fill="none"
                   stroke={showBreath ? breathLabels[breathPhase].color : '#00ffd4'}
-                  strokeWidth="2" opacity="0.8"
-                  style={{ filter: `drop-shadow(0 0 8px ${showBreath ? breathLabels[breathPhase].color : '#00ffd4'})` }}/>
+                  strokeWidth="1.5" opacity="0.45"
+                  style={{ filter: `drop-shadow(0 0 4px ${showBreath ? breathLabels[breathPhase].color : '#00ffd4'}66)` }}/>
+                {/* 相位倒數環：4 秒填滿後於 phase 變更時 key 重掛 */}
+                {showBreath && (
+                  <circle key={`${breathPhase}-${breathCount}`} cx="100" cy="100" r="90" fill="none"
+                    stroke={breathLabels[breathPhase].color}
+                    strokeWidth="2.5" strokeLinecap="round"
+                    strokeDasharray="565.48"
+                    transform="rotate(-90 100 100)"
+                    className="phase-tick"
+                    style={{ filter: `drop-shadow(0 0 6px ${breathLabels[breathPhase].color})` }}/>
+                )}
                 <circle cx="100" cy="100" r="75" fill="none"
                   stroke={showBreath ? breathLabels[breathPhase].color : '#00ffd4'}
-                  strokeWidth="1" opacity="0.4" strokeDasharray="3,3"/>
+                  strokeWidth="0.8" opacity="0.25" strokeDasharray="3,4"/>
                 <circle cx="100" cy="100" r="60" fill="none"
                   stroke={showBreath ? breathLabels[breathPhase].color : '#00ffd4'}
-                  strokeWidth="1" opacity="0.2"/>
+                  strokeWidth="0.6" opacity="0.12"/>
               </svg>
             </div>
 
+            {/* 完成一息 · 薄霧 toast */}
+            {breathToast.visible && breathToast.count > 0 && (
+              <div key={breathToast.count} className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <div className="toast-mist text-center" style={{
+                  background: 'rgba(10, 6, 18, 0.55)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(0, 255, 212, 0.35)',
+                  borderRadius: '2px',
+                  padding: '10px 20px'
+                }}>
+                  <div className="f-cyber text-[9px] tracking-[0.4em] opacity-60" style={{ color: '#00ffd4' }}>◯ BREATH.COMPLETE</div>
+                  <div className="f-serif-black text-lg mt-1" style={{ color: '#00ffd4' }}>
+                    第 <span className="tabular-nums">{breathToast.count}</span> 息成
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="f-serif-black text-8xl md:text-9xl mb-2" style={{
-                color: showBreath ? breathLabels[breathPhase].color : '#00ffd4',
-                textShadow: `0 0 20px ${showBreath ? breathLabels[breathPhase].color : '#00ffd4'}, 0 0 40px ${showBreath ? breathLabels[breathPhase].color : '#00ffd4'}88, 2px 2px 0 rgba(10, 6, 18, 0.8)`,
-                lineHeight: 1
-              }}>
+              {/* 氣字 —— 閒置時輕量、呼吸時染色；陰影減半 */}
+              <div
+                className={`f-serif-black text-8xl md:text-9xl mb-3 ${showBreath ? '' : 'idle-breath'}`}
+                style={{
+                  color: showBreath ? breathLabels[breathPhase].color : '#00ffd4',
+                  textShadow: showBreath
+                    ? `0 0 14px ${breathLabels[breathPhase].color}88, 0 0 28px ${breathLabels[breathPhase].color}33`
+                    : `0 0 10px #00ffd455, 0 0 20px #00ffd422`,
+                  lineHeight: 1,
+                  fontWeight: 400
+                }}
+              >
                 {showBreath ? breathLabels[breathPhase].cn : '氣'}
               </div>
-              <div className="f-cyber text-sm tracking-[0.4em] font-bold" style={{
-                color: showBreath ? breathLabels[breathPhase].color : '#00ffd4',
-                textShadow: `0 0 8px ${showBreath ? breathLabels[breathPhase].color : '#00ffd4'}`
-              }}>
-                {showBreath ? breathLabels[breathPhase].en : 'IDLE'}
-              </div>
+              {/* 狀態行：進行中顯示相位 + 四秒秒數標；閒置顯示「氣息待命」+ 霞鶩文楷 hint */}
+              {showBreath ? (
+                <>
+                  <div className="f-cyber text-xs tracking-[0.4em]" style={{
+                    color: breathLabels[breathPhase].color,
+                    opacity: 0.9,
+                    textShadow: `0 0 6px ${breathLabels[breathPhase].color}66`
+                  }}>
+                    {breathLabels[breathPhase].en} · 4s
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="f-sans-light text-xs tracking-[0.5em] opacity-50" style={{ color: '#e8dfff' }}>
+                    氣 息 待 命
+                  </div>
+                  <div className="f-wenkai text-[11px] mt-2 opacity-35" style={{ color: '#e8dfff' }}>
+                    點擊起手 · 同步呼吸
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          <button onClick={() => { setShowBreath(!showBreath); if (!showBreath) setBreathCount(0); }}
-            className={`w-full py-4 f-cyber tracking-[0.3em] cyber-border-small text-sm font-bold ${showBreath ? 'btn-neon-pink' : 'btn-neon'}`}>
-            {showBreath ? '◐ TERMINATE' : '▶ INITIATE.SEQUENCE'}
-          </button>
+          {/* 主按鈕（置中、不全寬）+ 次按鈕（有息才出現） */}
+          <div className="flex items-center justify-center gap-3 max-w-md mx-auto">
+            <button
+              onClick={() => { setShowBreath(!showBreath); if (!showBreath) setBreathCount(0); }}
+              className={`flex-1 py-4 px-6 f-cyber tracking-[0.25em] text-sm font-bold rounded-sm ${showBreath ? 'btn-qi-end' : 'btn-qi-begin'}`}
+            >
+              {showBreath ? '◐ 收功 · END.QI' : '▶ 起手 · BEGIN.QI'}
+            </button>
+            {!showBreath && breathCount > 0 && (
+              <button
+                onClick={() => setBreathCount(0)}
+                className="py-4 px-5 f-cyber tracking-[0.2em] text-xs rounded-sm btn-qi-reset"
+                title="重設當前計息"
+              >
+                ⟲ 重設
+              </button>
+            )}
+          </div>
 
           <div className="mt-6 terminal-card cyber-border p-4">
             <div className="f-cyber text-[10px] tracking-[0.3em] mb-3 neon-cyan">
