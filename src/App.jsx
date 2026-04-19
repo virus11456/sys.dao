@@ -1720,8 +1720,8 @@ export default function App() {
             </div>
           </div>
 
-          <div className="relative h-96 md:h-[28rem] lg:h-[32rem] flex items-center justify-center my-6">
-            <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative h-96 md:h-[28rem] lg:h-[32rem] flex items-center justify-center my-6 pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-80 h-80 md:w-96 md:h-96 lg:w-[28rem] lg:h-[28rem] rounded-full transition-all duration-[4000ms] ease-in-out" style={{
                 background: showBreath ? `radial-gradient(circle, ${breathLabels[breathPhase].color}55 0%, transparent 70%)` : 'radial-gradient(circle, rgba(0, 255, 212, 0.15) 0%, transparent 70%)',
                 transform: showBreath ? `scale(${breathLabels[breathPhase].scale})` : 'scale(1)',
@@ -1729,7 +1729,7 @@ export default function App() {
               }} />
             </div>
 
-            <div className="absolute inset-0 flex items-center justify-center rotate-slow opacity-40">
+            <div className="absolute inset-0 flex items-center justify-center rotate-slow opacity-40 pointer-events-none">
               <svg width="340" height="340" viewBox="0 0 200 200">
                 {baguaSymbols.map((s, i) => {
                   const angle = (i * 45 - 90) * Math.PI / 180;
