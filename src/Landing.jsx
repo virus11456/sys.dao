@@ -1,15 +1,18 @@
-// Landing page — 未登入時顯示的一頁式首頁
-// 設計：古典墨寶 × 賽博龐克，跟 app 其他部分視覺一致
-// 使用 App.jsx 裡同一個 <style> 區塊定義的 utility classes（f-cyber、cyber-border 等）
-import React, { useState } from 'react';
+// Landing page — 賽博修仙版
+// 未登入時顯示的一頁式首頁
+// 設計：古典修仙 × 賽博龐克，終端機 × 道場
+import React, { useState, useEffect } from 'react';
 import { signUpWithEmail, signInWithEmail } from './sync.js';
 
 export default function Landing({ onAuthSuccess }) {
-  const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
+  const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const submit = async () => {
     setErr('');
@@ -31,82 +34,289 @@ export default function Landing({ onAuthSuccess }) {
     }
   };
 
-  const features = [
-    { kanji: '今', label: '今日', en: 'SYS.DAILY', desc: '節氣飲食 · 修煉任務 · XP 進度' },
-    { kanji: '氣', label: '吐納', en: 'QI.BREATH', desc: '4-4-4-4 方盒呼吸 · 上古煉氣法' },
-    { kanji: '覺', label: '心覺', en: 'LOG.INNER', desc: '精神 · 睡眠 · 舌象觀察' },
-    { kanji: '昔', label: '往日', en: 'PAST.LOG', desc: '歷史時光足跡 · 趨勢分析' },
+  const modules = [
+    { kanji: '今', label: '今日', en: 'SYS.DAILY',
+      desc: '依當日節氣給出飲食/作息任務 · 勾選累積 XP · 連續天數即 streak' },
+    { kanji: '氣', label: '吐納', en: 'QI.BREATH',
+      desc: '4-4-4-4 方盒呼吸 · 每完成 10 息可解鎖成就 · 穩神定志' },
+    { kanji: '覺', label: '心覺', en: 'LOG.INNER',
+      desc: '記錄當日口渴/精神/睡眠 · 附舌象備註 · 觀察身體信號' },
+    { kanji: '昔', label: '往日', en: 'PAST.LOG',
+      desc: '歷史時光足跡 · 完成度趨勢 · 渴氣眠顏色編碼' },
+  ];
+
+  const steps = [
+    { num: '壹', title: '晨起入系', en: 'BOOT', desc: '打開今日 tab，檢視當日節氣 × 飲食建議 × 三餐任務' },
+    { num: '貳', title: '吐納三息', en: 'BREATHE', desc: '切到吐納 tab，四方盒呼吸十息定心 · 每輪 +5 XP' },
+    { num: '參', title: '勾選修行', en: 'EXECUTE', desc: '完成一項任務就勾一下 · 介面即時反饋 XP / LEVEL UP' },
+    { num: '肆', title: '夜終心覺', en: 'LOG', desc: '睡前寫心覺 · 口渴/精神/睡眠三指標 · 供未來觀察趨勢' },
   ];
 
   return (
     <div className="min-h-screen w-full relative overflow-x-hidden" style={{ background: '#0a0612' }}>
-      {/* 背景裝飾 */}
+      <style>{`
+        @keyframes hero-glitch {
+          0%, 92%, 100% {
+            text-shadow:
+              0 0 12px rgba(0, 255, 212, 0.7),
+              0 0 28px rgba(0, 255, 212, 0.4),
+              0 0 48px rgba(255, 0, 170, 0.25);
+            transform: translate(0, 0);
+          }
+          93% { text-shadow: -3px 0 rgba(255, 0, 170, 0.9), 3px 0 rgba(0, 255, 212, 0.9); transform: translate(-1px, 0); }
+          94% { text-shadow: 3px 0 rgba(255, 0, 170, 0.9), -3px 0 rgba(0, 255, 212, 0.9); transform: translate(1px, 0); }
+          95% { text-shadow: 0 2px rgba(255, 238, 0, 0.6); transform: translate(0, 1px); }
+        }
+        .hero-title { animation: hero-glitch 5s ease-in-out infinite; }
+
+        @keyframes grid-drift {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(40px, 40px); }
+        }
+        .grid-bg {
+          position: absolute; inset: -40px;
+          background-image:
+            linear-gradient(rgba(0, 255, 212, 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 212, 0.08) 1px, transparent 1px);
+          background-size: 40px 40px;
+          animation: grid-drift 20s linear infinite;
+          pointer-events: none;
+          opacity: 0.4;
+        }
+
+        @keyframes scanline {
+          0% { top: -5%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 105%; opacity: 0; }
+        }
+        .scanline {
+          position: fixed;
+          left: 0; right: 0; height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(0, 255, 212, 0.8), transparent);
+          box-shadow: 0 0 12px rgba(0, 255, 212, 0.6);
+          animation: scanline 6s linear infinite;
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        @keyframes kanji-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        .kanji-float { animation: kanji-float 4s ease-in-out infinite; }
+        .kanji-float-1 { animation-delay: 0s; }
+        .kanji-float-2 { animation-delay: 1s; }
+        .kanji-float-3 { animation-delay: 2s; }
+        .kanji-float-4 { animation-delay: 3s; }
+
+        @keyframes fade-up {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fade-up 0.9s ease-out both; }
+        .fade-up-d1 { animation-delay: 0.15s; }
+        .fade-up-d2 { animation-delay: 0.35s; }
+        .fade-up-d3 { animation-delay: 0.55s; }
+        .fade-up-d4 { animation-delay: 0.75s; }
+        .fade-up-d5 { animation-delay: 0.95s; }
+
+        @keyframes card-pulse {
+          0%, 100% { box-shadow: 0 0 0 rgba(0, 255, 212, 0); border-color: rgba(0, 255, 212, 0.2); }
+          50% { box-shadow: 0 0 24px rgba(0, 255, 212, 0.15); border-color: rgba(0, 255, 212, 0.5); }
+        }
+        .module-card {
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+        .module-card::before {
+          content: '';
+          position: absolute;
+          top: -50%; left: -50%;
+          width: 200%; height: 200%;
+          background: radial-gradient(circle, rgba(0, 255, 212, 0.15) 0%, transparent 50%);
+          opacity: 0;
+          transition: opacity 0.4s;
+          pointer-events: none;
+        }
+        .module-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(0, 255, 212, 0.7) !important;
+          box-shadow: 0 8px 32px rgba(0, 255, 212, 0.2);
+        }
+        .module-card:hover::before { opacity: 1; }
+        .module-card:hover .kanji-float { animation-play-state: paused; transform: scale(1.15); }
+
+        @keyframes auth-border-pulse {
+          0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 212, 0.15), inset 0 0 20px rgba(0, 255, 212, 0.03); }
+          50% { box-shadow: 0 0 48px rgba(0, 255, 212, 0.3), inset 0 0 30px rgba(255, 0, 170, 0.05); }
+        }
+        .auth-card { animation: auth-border-pulse 4s ease-in-out infinite; }
+
+        @keyframes cta-arrow {
+          0%, 100% { transform: translateY(0); opacity: 0.4; }
+          50% { transform: translateY(6px); opacity: 0.8; }
+        }
+        .cta-arrow { animation: cta-arrow 2s ease-in-out infinite; }
+
+        @keyframes particle-drift {
+          0% { transform: translate(0, 0) scale(1); opacity: 0; }
+          10% { opacity: 0.4; }
+          90% { opacity: 0.2; }
+          100% { transform: translate(20px, -40px) scale(0.5); opacity: 0; }
+        }
+        .particle {
+          position: absolute;
+          width: 3px; height: 3px;
+          background: #00ffd4;
+          border-radius: 50%;
+          pointer-events: none;
+          box-shadow: 0 0 6px rgba(0, 255, 212, 0.8);
+        }
+
+        @keyframes step-arrow {
+          0%, 100% { opacity: 0.3; transform: translateX(0); }
+          50% { opacity: 0.7; transform: translateX(4px); }
+        }
+        .step-arrow { animation: step-arrow 2s ease-in-out infinite; }
+
+        @keyframes blink-caret {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .caret { animation: blink-caret 1s step-end infinite; }
+      `}</style>
+
+      {/* 背景：網格漂移 + 漸層光暈 */}
+      <div className="grid-bg" />
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 255, 212, 0.08), transparent 70%), radial-gradient(ellipse 60% 40% at 90% 80%, rgba(255, 0, 170, 0.08), transparent 70%)',
+        background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0, 255, 212, 0.10), transparent 60%), radial-gradient(ellipse 60% 40% at 10% 70%, rgba(255, 0, 170, 0.08), transparent 60%), radial-gradient(ellipse 60% 40% at 90% 90%, rgba(255, 238, 0, 0.06), transparent 60%)',
         pointerEvents: 'none', zIndex: 0,
       }} />
+      {/* 掃描線 */}
+      <div className="scanline" />
+      {/* 粒子 */}
+      {mounted && [...Array(8)].map((_, i) => (
+        <div key={i} className="particle" style={{
+          left: `${(i * 13) % 100}%`,
+          top: `${(i * 19 + 20) % 90}%`,
+          animation: `particle-drift ${4 + (i % 3)}s linear infinite`,
+          animationDelay: `${i * 0.7}s`,
+        }} />
+      ))}
 
-      <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-6 md:px-8 py-10 md:py-16">
+      <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-6 md:px-8 py-10 md:py-16">
 
-        {/* Header — 品牌標記 */}
-        <div className="flex items-center justify-between mb-12 md:mb-20">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-16 md:mb-24 fade-up">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 cyber-border-small flex items-center justify-center" style={{
+            <div className="w-9 h-9 cyber-border-small flex items-center justify-center" style={{
               background: 'rgba(0, 255, 212, 0.1)',
-              border: '1px solid rgba(0, 255, 212, 0.4)',
+              border: '1px solid rgba(0, 255, 212, 0.5)',
+              boxShadow: '0 0 12px rgba(0, 255, 212, 0.2)',
             }}>
-              <span className="f-serif-black text-lg" style={{ color: '#00ffd4' }}>道</span>
+              <span className="f-serif-black text-xl" style={{ color: '#00ffd4' }}>道</span>
             </div>
             <div>
-              <div className="f-cyber text-[10px] tracking-[0.3em] opacity-60" style={{ color: '#e8dfff' }}>SYS.DAO</div>
-              <div className="f-cyber text-[8px] tracking-widest opacity-40" style={{ color: '#e8dfff' }}>v0.1 · PUBLIC BETA</div>
+              <div className="f-cyber text-[10px] tracking-[0.3em] opacity-70" style={{ color: '#e8dfff' }}>SYS.DAO</div>
+              <div className="f-cyber text-[8px] tracking-widest opacity-40" style={{ color: '#e8dfff' }}>v0.2 · 賽博修仙 BETA</div>
             </div>
           </div>
           <div className="f-cyber text-[9px] tracking-[0.3em] opacity-40 hidden sm:block" style={{ color: '#e8dfff' }}>
-            INIT.PHASE.01
+            <span className="caret">▋</span> INIT.PHASE.01
           </div>
         </div>
 
         {/* Hero */}
-        <div className="mb-16 md:mb-24 text-center">
-          <div className="f-cyber text-[10px] md:text-xs tracking-[0.5em] mb-4 neon-cyan opacity-70">
-            ◢ SYSTEM OF THE WAY ◣
+        <div className="mb-24 md:mb-32 text-center">
+          <div className="f-cyber text-[10px] md:text-xs tracking-[0.5em] mb-6 opacity-70 fade-up" style={{ color: '#00ffd4' }}>
+            ◢ CYBER × CULTIVATION ◣
           </div>
-          <h1 className="f-serif-black text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-widest mb-4 ink-glow-cyan leading-none">
-            系統<span className="inline-block mx-2 opacity-40">·</span>道
+          <h1
+            className="hero-title f-serif-black text-7xl sm:text-8xl md:text-9xl tracking-[0.2em] mb-6 leading-none fade-up fade-up-d1"
+            style={{ color: '#00ffd4' }}
+          >
+            賽博修仙
           </h1>
-          <p className="f-wenkai text-base md:text-lg opacity-70 max-w-2xl mx-auto leading-relaxed mt-6" style={{ color: '#e8dfff' }}>
-            一日一修 · 節氣為本 · 賽博介面下的古法煉形
-          </p>
-          <p className="f-cyber text-[11px] md:text-xs tracking-[0.2em] opacity-50 mt-3" style={{ color: '#e8dfff' }}>
-            A daoist daily-practice OS · ancient rhythm, cyber interface
-          </p>
+          <div className="fade-up fade-up-d2">
+            <p className="f-wenkai text-lg md:text-2xl opacity-80 leading-relaxed max-w-2xl mx-auto" style={{ color: '#e8dfff' }}>
+              雲端煉丹 <span className="opacity-40 mx-1">·</span>
+              節氣鑄骨 <span className="opacity-40 mx-1">·</span>
+              勾選飛昇
+            </p>
+            <p className="f-cyber text-[11px] md:text-sm tracking-[0.2em] opacity-50 mt-4" style={{ color: '#e8dfff' }}>
+              refine elixir in the cloud · forge bone by solar terms · ascend by checkbox
+            </p>
+          </div>
 
-          {/* CTA scroll hint */}
-          <div className="mt-12 f-cyber text-[10px] tracking-[0.3em] opacity-40" style={{ color: '#e8dfff' }}>
-            ▼ 登入以進入系統 ▼
+          {/* Scroll hint */}
+          <div className="mt-16 fade-up fade-up-d4">
+            <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-1" style={{ color: '#e8dfff' }}>
+              ENTER THE SYSTEM
+            </div>
+            <div className="cta-arrow text-lg" style={{ color: '#00ffd4' }}>▼</div>
           </div>
         </div>
 
-        {/* 功能預覽 — 4 卡片對應 4 tab */}
-        <div className="mb-16 md:mb-24">
-          <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-4 text-center" style={{ color: '#e8dfff' }}>
+        {/* What is this? — 更清楚的介紹 */}
+        <div className="mb-24 md:mb-32 fade-up">
+          <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-6 text-center" style={{ color: '#e8dfff' }}>
+            ◢ WHAT IS THIS ◣
+          </div>
+          <div className="max-w-3xl mx-auto space-y-5">
+            <p className="f-wenkai text-base md:text-lg leading-loose text-center" style={{ color: '#e8dfff' }}>
+              把散落在《黃帝內經》《本草綱目》《千金方》裡的<span style={{ color: '#00ffd4' }}>養生智慧</span>，
+              用<span style={{ color: '#ff00aa' }}>賽博龐克終端機</span>的方式重新裝訂——
+            </p>
+            <p className="f-wenkai text-base md:text-lg leading-loose text-center" style={{ color: '#e8dfff' }}>
+              每天打開只要<span style={{ color: '#ffee00' }}>勾幾個方格</span>、
+              練<span style={{ color: '#ffee00' }}>十息呼吸</span>、
+              寫幾筆<span style={{ color: '#ffee00' }}>當日心覺</span>，就完成了一日修煉。
+            </p>
+            <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-80" style={{ color: '#e8dfff' }}>
+              系統依據當下<span style={{ color: '#00ffd4' }}>節氣</span>給你配菜、配法、配呼吸節奏，
+              你只負責執行與觀察。
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 fade-up fade-up-d1">
+              {[
+                { label: '修煉主題', en: 'DAILY THEME', value: '節氣驅動' },
+                { label: '記錄介面', en: 'LOG UI', value: '終端機風' },
+                { label: '進度機制', en: 'PROGRESS', value: 'XP · LEVEL · STREAK' },
+                { label: '同步方式', en: 'SYNC', value: '雲端帳號' },
+              ].map((s, i) => (
+                <div key={i} className="cyber-border-small p-3 text-center" style={{
+                  background: 'rgba(20, 10, 35, 0.4)',
+                  border: '1px solid rgba(0, 255, 212, 0.15)',
+                }}>
+                  <div className="f-cyber text-[8px] tracking-[0.2em] opacity-40 mb-1" style={{ color: '#e8dfff' }}>{s.en}</div>
+                  <div className="f-cyber text-[10px] mb-1" style={{ color: '#00ffd4' }}>{s.label}</div>
+                  <div className="f-wenkai text-[11px] opacity-70" style={{ color: '#e8dfff' }}>{s.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Modules — 4 功能 */}
+        <div className="mb-24 md:mb-32 fade-up">
+          <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-6 text-center" style={{ color: '#e8dfff' }}>
             ◢ MODULES · 內建四式 ◣
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {features.map((f, i) => (
-              <div key={i} className="cyber-border-small p-4 text-center" style={{
-                background: 'rgba(20, 10, 35, 0.5)',
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {modules.map((f, i) => (
+              <div key={i} className={`module-card cyber-border-small p-5 text-center fade-up fade-up-d${i+1}`} style={{
+                background: 'rgba(20, 10, 35, 0.6)',
                 border: '1px solid rgba(0, 255, 212, 0.2)',
               }}>
-                <div className="f-serif-black text-4xl md:text-5xl mb-2" style={{
+                <div className={`kanji-float kanji-float-${i+1} f-serif-black text-5xl md:text-6xl mb-3 relative z-10`} style={{
                   color: '#00ffd4',
-                  textShadow: '0 0 10px rgba(0, 255, 212, 0.4)',
+                  textShadow: '0 0 14px rgba(0, 255, 212, 0.5)',
                 }}>{f.kanji}</div>
-                <div className="f-sans-black text-sm md:text-base mb-1" style={{ color: '#e8dfff' }}>{f.label}</div>
-                <div className="f-cyber text-[8px] md:text-[9px] tracking-widest opacity-50 mb-2" style={{ color: '#00ffd4' }}>{f.en}</div>
-                <div className="f-wenkai text-[10px] md:text-[11px] opacity-60 leading-relaxed" style={{ color: '#e8dfff' }}>
+                <div className="f-sans-black text-base md:text-lg mb-1 relative z-10" style={{ color: '#e8dfff' }}>{f.label}</div>
+                <div className="f-cyber text-[8px] md:text-[9px] tracking-widest opacity-60 mb-3 relative z-10" style={{ color: '#00ffd4' }}>{f.en}</div>
+                <div className="f-wenkai text-[11px] md:text-xs opacity-70 leading-relaxed relative z-10" style={{ color: '#e8dfff' }}>
                   {f.desc}
                 </div>
               </div>
@@ -114,31 +324,62 @@ export default function Landing({ onAuthSuccess }) {
           </div>
         </div>
 
-        {/* 登入/註冊表單 */}
-        <div id="auth" className="mb-16 md:mb-20">
-          <div className="cyber-border p-6 md:p-8" style={{
-            background: 'linear-gradient(180deg, rgba(0, 255, 212, 0.04), rgba(255, 0, 170, 0.02))',
-            border: '1px solid rgba(0, 255, 212, 0.25)',
+        {/* How it works — 一日修煉流程 */}
+        <div className="mb-24 md:mb-32 fade-up">
+          <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-6 text-center" style={{ color: '#e8dfff' }}>
+            ◢ A DAY IN THE SYSTEM · 一日修煉流程 ◣
+          </div>
+          <div className="space-y-4 max-w-3xl mx-auto">
+            {steps.map((s, i) => (
+              <div key={i} className={`flex items-start gap-4 cyber-border-small p-4 fade-up fade-up-d${i+1}`} style={{
+                background: 'rgba(20, 10, 35, 0.5)',
+                border: '1px solid rgba(0, 255, 212, 0.15)',
+              }}>
+                <div className="flex-shrink-0 w-14 h-14 flex items-center justify-center cyber-border-small" style={{
+                  background: 'rgba(0, 255, 212, 0.08)',
+                  border: '1px solid rgba(0, 255, 212, 0.4)',
+                }}>
+                  <span className="f-serif-black text-2xl" style={{ color: '#00ffd4', textShadow: '0 0 10px rgba(0, 255, 212, 0.5)' }}>{s.num}</span>
+                </div>
+                <div className="flex-1 pt-1">
+                  <div className="flex items-baseline gap-3 mb-1">
+                    <div className="f-sans-black text-base" style={{ color: '#e8dfff' }}>{s.title}</div>
+                    <div className="f-cyber text-[9px] tracking-[0.3em] opacity-50" style={{ color: '#00ffd4' }}>{s.en}</div>
+                  </div>
+                  <div className="f-wenkai text-[12px] md:text-sm opacity-70 leading-relaxed" style={{ color: '#e8dfff' }}>
+                    {s.desc}
+                  </div>
+                </div>
+                <div className="step-arrow f-cyber text-sm self-center" style={{ color: '#00ffd4' }}>▸</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Auth form */}
+        <div id="auth" className="mb-20 md:mb-24 fade-up">
+          <div className="auth-card cyber-border p-6 md:p-8" style={{
+            background: 'linear-gradient(180deg, rgba(0, 255, 212, 0.05), rgba(255, 0, 170, 0.02))',
+            border: '1px solid rgba(0, 255, 212, 0.3)',
             maxWidth: '440px',
             margin: '0 auto',
           }}>
             <div className="text-center mb-5">
-              <div className="f-cyber text-[10px] tracking-[0.3em] opacity-60 mb-2" style={{ color: '#00ffd4' }}>
+              <div className="f-cyber text-[10px] tracking-[0.3em] opacity-70 mb-2" style={{ color: '#00ffd4' }}>
                 ◉ ENTRY.POINT
               </div>
               <div className="f-serif-black text-2xl md:text-3xl" style={{ color: '#e8dfff' }}>
-                {mode === 'signin' ? '登入系統' : '建立帳號'}
+                {mode === 'signin' ? '入門登入' : '結緣註冊'}
               </div>
-              <div className="f-wenkai text-[11px] opacity-50 mt-1" style={{ color: '#e8dfff' }}>
-                {mode === 'signin' ? 'Welcome back · 繼續你的修煉' : 'Create account · 跨裝置保存你的紀錄'}
+              <div className="f-wenkai text-[11px] opacity-60 mt-1" style={{ color: '#e8dfff' }}>
+                {mode === 'signin' ? 'Welcome back · 繼續你的修煉' : 'Create account · 開啟第一日修煉'}
               </div>
             </div>
 
-            {/* Tab 切換 */}
             <div className="flex gap-1 mb-4">
               <button
                 onClick={() => { setMode('signin'); setErr(''); }}
-                className="flex-1 py-2 text-xs f-cyber cyber-border-small tracking-widest"
+                className="flex-1 py-2 text-xs f-cyber cyber-border-small tracking-widest transition-all"
                 style={{
                   background: mode === 'signin' ? 'rgba(0, 255, 212, 0.15)' : 'rgba(20, 10, 35, 0.5)',
                   border: mode === 'signin' ? '1px solid rgba(0, 255, 212, 0.5)' : '1px solid rgba(0, 255, 212, 0.15)',
@@ -149,7 +390,7 @@ export default function Landing({ onAuthSuccess }) {
               </button>
               <button
                 onClick={() => { setMode('signup'); setErr(''); }}
-                className="flex-1 py-2 text-xs f-cyber cyber-border-small tracking-widest"
+                className="flex-1 py-2 text-xs f-cyber cyber-border-small tracking-widest transition-all"
                 style={{
                   background: mode === 'signup' ? 'rgba(255, 0, 170, 0.15)' : 'rgba(20, 10, 35, 0.5)',
                   border: mode === 'signup' ? '1px solid rgba(255, 0, 170, 0.5)' : '1px solid rgba(255, 0, 170, 0.15)',
@@ -160,7 +401,6 @@ export default function Landing({ onAuthSuccess }) {
               </button>
             </div>
 
-            {/* Inputs */}
             <div className="space-y-3 mb-4">
               <div>
                 <label className="f-cyber text-[9px] tracking-[0.3em] opacity-50 mb-1 block" style={{ color: '#e8dfff' }}>
@@ -216,40 +456,40 @@ export default function Landing({ onAuthSuccess }) {
             <button
               onClick={submit}
               disabled={busy || !email || !password}
-              className="w-full py-3 text-sm f-cyber cyber-border-small tracking-widest"
+              className="w-full py-3 text-sm f-cyber cyber-border-small tracking-widest transition-all"
               style={{
-                background: mode === 'signin' ? 'linear-gradient(90deg, rgba(0, 255, 212, 0.2), rgba(0, 255, 212, 0.1))' : 'linear-gradient(90deg, rgba(255, 0, 170, 0.2), rgba(255, 0, 170, 0.1))',
-                border: mode === 'signin' ? '1px solid rgba(0, 255, 212, 0.5)' : '1px solid rgba(255, 0, 170, 0.5)',
+                background: mode === 'signin' ? 'linear-gradient(90deg, rgba(0, 255, 212, 0.25), rgba(0, 255, 212, 0.1))' : 'linear-gradient(90deg, rgba(255, 0, 170, 0.25), rgba(255, 0, 170, 0.1))',
+                border: mode === 'signin' ? '1px solid rgba(0, 255, 212, 0.6)' : '1px solid rgba(255, 0, 170, 0.6)',
                 color: mode === 'signin' ? '#00ffd4' : '#ff00aa',
-                opacity: (busy || !email || !password) ? 0.5 : 1,
+                opacity: (busy || !email || !password) ? 0.4 : 1,
                 cursor: (busy || !email || !password) ? 'not-allowed' : 'pointer',
-                textShadow: mode === 'signin' ? '0 0 10px rgba(0, 255, 212, 0.4)' : '0 0 10px rgba(255, 0, 170, 0.4)',
+                textShadow: mode === 'signin' ? '0 0 12px rgba(0, 255, 212, 0.5)' : '0 0 12px rgba(255, 0, 170, 0.5)',
               }}
             >
-              {busy ? '⧗ 連線中…' : (mode === 'signin' ? '▶ 登入 · ENTER' : '▶ 建立帳號 · REGISTER')}
+              {busy ? '⧗ 連線中…' : (mode === 'signin' ? '▶ 入山 · ENTER' : '▶ 開始修煉 · BEGIN')}
             </button>
 
-            <div className="f-wenkai text-[10px] opacity-40 mt-3 text-center" style={{ color: '#e8dfff' }}>
+            <div className="f-wenkai text-[10px] opacity-40 mt-3 text-center leading-relaxed" style={{ color: '#e8dfff' }}>
               {mode === 'signup'
-                ? '◯ 無需驗證 · 註冊即登入 · 資料加密儲存於雲端'
-                : '◯ 密碼忘了？請用另一組信箱重新註冊（目前無自助找回）'}
+                ? '◯ 無需驗證 · 註冊即登入 · 資料加密儲存於 Supabase'
+                : '◯ 密碼遺忘請以他信箱重新註冊（目前無自助找回）'}
             </div>
           </div>
         </div>
 
-        {/* Footer — 理念聲明 */}
-        <div className="text-center opacity-50 space-y-2">
+        {/* Footer */}
+        <div className="text-center opacity-50 space-y-2 pb-8 fade-up">
           <div className="f-wenkai text-[11px] md:text-xs leading-relaxed" style={{ color: '#e8dfff' }}>
             「上古之人，其知道者，法於陰陽，和於術數，食飲有節，起居有常。」
           </div>
           <div className="f-cyber text-[9px] tracking-[0.3em]" style={{ color: '#e8dfff' }}>
             —— 黃帝內經 · 素問 · 上古天真論
           </div>
-          <div className="f-cyber text-[9px] tracking-[0.3em] mt-4 opacity-70" style={{ color: '#e8dfff' }}>
-            BUILT WITH · REACT · VITE · SUPABASE
+          <div className="f-cyber text-[9px] tracking-[0.3em] mt-6 opacity-70" style={{ color: '#e8dfff' }}>
+            BUILT WITH · REACT · VITE · SUPABASE · TAILWIND
           </div>
           <div className="f-cyber text-[8px] tracking-widest opacity-50" style={{ color: '#e8dfff' }}>
-            github.com/virus11456/sys.dao
+            github.com/virus11456/sys.dao · v0.2 · 賽博修仙
           </div>
         </div>
 
