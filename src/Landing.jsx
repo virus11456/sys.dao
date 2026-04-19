@@ -36,20 +36,20 @@ export default function Landing({ onAuthSuccess }) {
 
   const modules = [
     { kanji: '今', label: '今日', en: 'SYS.DAILY',
-      desc: '依當日節氣給出飲食/作息任務 · 勾選累積 XP · 連續天數即 streak' },
+      desc: '依當日節氣立食、息、動三課 · 勾之即行 · 日累為功' },
     { kanji: '氣', label: '吐納', en: 'QI.BREATH',
-      desc: '4-4-4-4 方盒呼吸 · 每完成 10 息可解鎖成就 · 穩神定志' },
+      desc: '上古煉氣四相 · 直貫丹田 · 返還先天一氣' },
     { kanji: '覺', label: '心覺', en: 'LOG.INNER',
-      desc: '記錄當日口渴/精神/睡眠 · 附舌象備註 · 觀察身體信號' },
+      desc: '錄渴氣眠三候 · 備舌象 · 以身為鏡' },
     { kanji: '昔', label: '往日', en: 'PAST.LOG',
-      desc: '歷史時光足跡 · 完成度趨勢 · 渴氣眠顏色編碼' },
+      desc: '歷日足跡 · 三候趨勢 · 回溯觀照' },
   ];
 
   const steps = [
-    { num: '壹', title: '晨起入系', en: 'BOOT', desc: '打開今日 tab，檢視當日節氣 × 飲食建議 × 三餐任務' },
-    { num: '貳', title: '吐納三息', en: 'BREATHE', desc: '切到吐納 tab，四方盒呼吸十息定心 · 每輪 +5 XP' },
-    { num: '參', title: '勾選修行', en: 'EXECUTE', desc: '完成一項任務就勾一下 · 介面即時反饋 XP / LEVEL UP' },
-    { num: '肆', title: '夜終心覺', en: 'LOG', desc: '睡前寫心覺 · 口渴/精神/睡眠三指標 · 供未來觀察趨勢' },
+    { num: '壹', title: '晨起入系', en: 'BOOT', desc: '檢視當日節氣 · 明食材、避發物、知原則 · 以節氣為律' },
+    { num: '貳', title: '吐納煉氣', en: 'BREATHE', desc: '循上古煉氣四相（吸·沉·吐·空）· 直貫丹田 · 引後天氣返先天一氣' },
+    { num: '參', title: '勾選行課', en: 'EXECUTE', desc: '依今日三課勾而行之 · 完成即積經驗 · 漸次補養營衛' },
+    { num: '肆', title: '夜終心覺', en: 'LOG', desc: '睡前錄渴氣眠三候 · 不強解、不刻意 · 只記觀察' },
   ];
 
   return (
@@ -254,13 +254,16 @@ export default function Landing({ onAuthSuccess }) {
           </div>
 
           <div className="fade-up fade-up-d2">
-            <p className="f-wenkai text-xl md:text-3xl leading-relaxed max-w-2xl mx-auto" style={{ color: '#e8dfff' }}>
-              雲端煉丹 <span className="opacity-30 mx-2">·</span>
-              節氣鑄骨 <span className="opacity-30 mx-2">·</span>
-              勾選飛昇
+            <p className="f-wenkai text-2xl md:text-4xl leading-relaxed max-w-2xl mx-auto" style={{ color: '#e8dfff' }}>
+              返還先天一氣
             </p>
-            <p className="f-cyber text-[11px] md:text-sm tracking-[0.2em] opacity-40 mt-5" style={{ color: '#e8dfff' }}>
-              refine elixir in the cloud · forge bone by solar terms · ascend by checkbox
+            <p className="f-wenkai text-sm md:text-base opacity-60 mt-3 leading-relaxed" style={{ color: '#e8dfff' }}>
+              呼吸精氣 <span className="opacity-40 mx-1">·</span>
+              調和營衛 <span className="opacity-40 mx-1">·</span>
+              獨立守神
+            </p>
+            <p className="f-cyber text-[10px] md:text-xs tracking-[0.2em] opacity-40 mt-4" style={{ color: '#e8dfff' }}>
+              return to pre-heaven primordial qi · balance ying & wei
             </p>
           </div>
 
@@ -273,35 +276,53 @@ export default function Landing({ onAuthSuccess }) {
           </div>
         </div>
 
-        {/* What is this? — 簡潔介紹，只保留一個 accent 色 */}
+        {/* What is this? — 上古煉氣 × 先天一氣 × 營衛 */}
         <div className="mb-20 md:mb-28 fade-up">
           <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-8 text-center" style={{ color: '#e8dfff' }}>
             ◢ WHAT IS THIS ◣
           </div>
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className="max-w-2xl mx-auto space-y-7">
             <p className="f-wenkai text-base md:text-lg leading-loose text-center" style={{ color: '#e8dfff' }}>
-              把散落在《黃帝內經》《本草綱目》《千金方》裡的養生智慧，用賽博龐克終端機的方式重新裝訂。
+              sys.dao 以「上古煉氣之法」為本——後天呼吸浮於胸膈，煉氣則直貫丹田，<span style={{ color: '#00ffd4' }}>返還先天一氣</span>。
             </p>
-            <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-80" style={{ color: '#e8dfff' }}>
-              每天打開只要勾幾個方格、練十息呼吸、寫幾筆當日心覺，就完成了一日修煉。
+            <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-85" style={{ color: '#e8dfff' }}>
+              一氣既充，<span style={{ color: '#00ffd4' }}>營氣</span>循脈以濡養五臟，<span style={{ color: '#00ffd4' }}>衛氣</span>充表以抵百病。神自凝、心自喜、百脈自調。
             </p>
-            <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-70" style={{ color: '#e8dfff' }}>
-              系統依據當下節氣給你配菜、配法、配呼吸節奏，你只負責執行與觀察。
+            <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-75" style={{ color: '#e8dfff' }}>
+              節氣為律 · 吐納為本 · 心覺為鏡。不精研陰陽，讓身體做主；依法而行，自有所感。
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 fade-up fade-up-d1">
+
+            {/* 典籍引文 */}
+            <div className="pt-4 fade-up fade-up-d1">
+              <div className="cyber-border-small p-4 md:p-5 text-center" style={{
+                background: 'rgba(20, 10, 35, 0.5)',
+                border: '1px solid rgba(0, 255, 212, 0.18)',
+                borderLeft: '2px solid rgba(0, 255, 212, 0.45)',
+              }}>
+                <div className="f-cyber text-[9px] tracking-[0.3em] opacity-50 mb-3" style={{ color: '#00ffd4' }}>◆ 典出 · CANON</div>
+                <div className="f-wenkai text-sm md:text-base leading-loose" style={{ color: '#e8dfff' }}>
+                  「呼吸精氣，獨立守神，肌肉若一，故能壽敝天地。」
+                </div>
+                <div className="f-cyber text-[9px] tracking-[0.3em] opacity-40 mt-3" style={{ color: '#e8dfff' }}>
+                  ——《黃帝內經 · 素問 · 上古天真論》
+                </div>
+              </div>
+            </div>
+
+            {/* 三氣結構 spec chips */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 fade-up fade-up-d2">
               {[
-                { label: '修煉主題', en: 'DAILY THEME', value: '節氣驅動' },
-                { label: '記錄介面', en: 'LOG UI', value: '終端機風' },
-                { label: '進度機制', en: 'PROGRESS', value: 'XP · LEVEL · STREAK' },
-                { label: '同步方式', en: 'SYNC', value: '雲端帳號' },
+                { tag: '先天一氣', en: 'PRIMORDIAL', desc: '煉氣直貫丹田 · 返還本源' },
+                { tag: '營氣', en: 'YING · NUTRITIVE', desc: '行脈中 · 濡養五臟六腑' },
+                { tag: '衛氣', en: 'WEI · DEFENSIVE', desc: '充肌表 · 百病不侵' },
               ].map((s, i) => (
-                <div key={i} className="cyber-border-small p-3 text-center" style={{
-                  background: 'rgba(20, 10, 35, 0.4)',
-                  border: '1px solid rgba(0, 255, 212, 0.12)',
+                <div key={i} className="cyber-border-small p-3" style={{
+                  background: 'rgba(20, 10, 35, 0.5)',
+                  border: '1px solid rgba(0, 255, 212, 0.15)',
                 }}>
-                  <div className="f-cyber text-[8px] tracking-[0.2em] opacity-40 mb-1" style={{ color: '#e8dfff' }}>{s.en}</div>
-                  <div className="f-wenkai text-[11px] mb-1 opacity-80" style={{ color: '#e8dfff' }}>{s.label}</div>
-                  <div className="f-cyber text-[10px] opacity-70" style={{ color: '#00ffd4' }}>{s.value}</div>
+                  <div className="f-cyber text-[8px] tracking-[0.25em] opacity-50 mb-1" style={{ color: '#00ffd4' }}>{s.en}</div>
+                  <div className="f-serif-black text-base mb-1.5" style={{ color: '#f2ecff' }}>{s.tag}</div>
+                  <div className="f-wenkai text-[11px] leading-relaxed opacity-70" style={{ color: '#e8dfff' }}>{s.desc}</div>
                 </div>
               ))}
             </div>
