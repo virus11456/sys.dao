@@ -55,19 +55,25 @@ export default function Landing({ onAuthSuccess }) {
   return (
     <div className="min-h-screen w-full relative overflow-x-hidden" style={{ background: '#0a0612' }}>
       <style>{`
+        /* Hero 用霞鶩文楷（已在 index.html 載入），毛筆字感 + 白字 + cyan 外發光，
+           比 Cactus Classical Serif 900 重體更優雅、更配「賽博修仙」這種戲謔題字 */
+        .hero-title-font {
+          font-family: 'LXGW WenKai', 'Cactus Classical Serif', 'Noto Serif TC', serif;
+          font-weight: 400;
+          font-feature-settings: 'halt' 1, 'vpal' 1;
+        }
         @keyframes hero-glitch {
           0%, 92%, 100% {
             text-shadow:
-              0 0 12px rgba(0, 255, 212, 0.7),
-              0 0 28px rgba(0, 255, 212, 0.4),
-              0 0 48px rgba(255, 0, 170, 0.25);
+              0 0 18px rgba(0, 255, 212, 0.5),
+              0 0 40px rgba(0, 255, 212, 0.25),
+              0 0 80px rgba(255, 0, 170, 0.15);
             transform: translate(0, 0);
           }
-          93% { text-shadow: -3px 0 rgba(255, 0, 170, 0.9), 3px 0 rgba(0, 255, 212, 0.9); transform: translate(-1px, 0); }
-          94% { text-shadow: 3px 0 rgba(255, 0, 170, 0.9), -3px 0 rgba(0, 255, 212, 0.9); transform: translate(1px, 0); }
-          95% { text-shadow: 0 2px rgba(255, 238, 0, 0.6); transform: translate(0, 1px); }
+          93% { text-shadow: -2px 0 rgba(255, 0, 170, 0.6), 2px 0 rgba(0, 255, 212, 0.6), 0 0 30px rgba(0, 255, 212, 0.3); transform: translate(-1px, 0); }
+          94% { text-shadow: 2px 0 rgba(255, 0, 170, 0.6), -2px 0 rgba(0, 255, 212, 0.6), 0 0 30px rgba(0, 255, 212, 0.3); transform: translate(1px, 0); }
         }
-        .hero-title { animation: hero-glitch 5s ease-in-out infinite; }
+        .hero-title { animation: hero-glitch 6s ease-in-out infinite; }
 
         @keyframes grid-drift {
           0% { transform: translate(0, 0); }
@@ -76,12 +82,12 @@ export default function Landing({ onAuthSuccess }) {
         .grid-bg {
           position: absolute; inset: -40px;
           background-image:
-            linear-gradient(rgba(0, 255, 212, 0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 212, 0.08) 1px, transparent 1px);
+            linear-gradient(rgba(0, 255, 212, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 212, 0.05) 1px, transparent 1px);
           background-size: 40px 40px;
-          animation: grid-drift 20s linear infinite;
+          animation: grid-drift 30s linear infinite;
           pointer-events: none;
-          opacity: 0.4;
+          opacity: 0.5;
         }
 
         @keyframes scanline {
@@ -92,10 +98,10 @@ export default function Landing({ onAuthSuccess }) {
         }
         .scanline {
           position: fixed;
-          left: 0; right: 0; height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(0, 255, 212, 0.8), transparent);
-          box-shadow: 0 0 12px rgba(0, 255, 212, 0.6);
-          animation: scanline 6s linear infinite;
+          left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(0, 255, 212, 0.5), transparent);
+          box-shadow: 0 0 8px rgba(0, 255, 212, 0.3);
+          animation: scanline 10s linear infinite;
           pointer-events: none;
           z-index: 2;
         }
@@ -230,54 +236,57 @@ export default function Landing({ onAuthSuccess }) {
         </div>
 
         {/* Hero */}
-        <div className="mb-24 md:mb-32 text-center">
-          <div className="f-cyber text-[10px] md:text-xs tracking-[0.5em] mb-6 opacity-70 fade-up" style={{ color: '#00ffd4' }}>
+        <div className="mb-20 md:mb-28 text-center">
+          <div className="f-cyber text-[10px] md:text-xs tracking-[0.5em] mb-8 opacity-60 fade-up" style={{ color: '#00ffd4' }}>
             ◢ CYBER × CULTIVATION ◣
           </div>
           <h1
-            className="hero-title f-serif-black text-7xl sm:text-8xl md:text-9xl tracking-[0.2em] mb-6 leading-none fade-up fade-up-d1"
-            style={{ color: '#00ffd4' }}
+            className="hero-title hero-title-font text-6xl sm:text-7xl md:text-8xl tracking-[0.15em] mb-8 leading-none fade-up fade-up-d1"
+            style={{ color: '#f2ecff' }}
           >
             賽博修仙
           </h1>
+          {/* 細線分隔 */}
+          <div className="fade-up fade-up-d2 flex items-center justify-center gap-3 mb-8">
+            <div className="h-px w-12 md:w-20" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,255,212,0.5))' }} />
+            <span className="f-cyber text-[9px] tracking-[0.3em] opacity-40" style={{ color: '#00ffd4' }}>◆</span>
+            <div className="h-px w-12 md:w-20" style={{ background: 'linear-gradient(90deg, rgba(0,255,212,0.5), transparent)' }} />
+          </div>
+
           <div className="fade-up fade-up-d2">
-            <p className="f-wenkai text-lg md:text-2xl opacity-80 leading-relaxed max-w-2xl mx-auto" style={{ color: '#e8dfff' }}>
-              雲端煉丹 <span className="opacity-40 mx-1">·</span>
-              節氣鑄骨 <span className="opacity-40 mx-1">·</span>
+            <p className="f-wenkai text-xl md:text-3xl leading-relaxed max-w-2xl mx-auto" style={{ color: '#e8dfff' }}>
+              雲端煉丹 <span className="opacity-30 mx-2">·</span>
+              節氣鑄骨 <span className="opacity-30 mx-2">·</span>
               勾選飛昇
             </p>
-            <p className="f-cyber text-[11px] md:text-sm tracking-[0.2em] opacity-50 mt-4" style={{ color: '#e8dfff' }}>
+            <p className="f-cyber text-[11px] md:text-sm tracking-[0.2em] opacity-40 mt-5" style={{ color: '#e8dfff' }}>
               refine elixir in the cloud · forge bone by solar terms · ascend by checkbox
             </p>
           </div>
 
           {/* Scroll hint */}
           <div className="mt-16 fade-up fade-up-d4">
-            <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-1" style={{ color: '#e8dfff' }}>
+            <div className="f-cyber text-[10px] tracking-[0.3em] opacity-40 mb-1" style={{ color: '#e8dfff' }}>
               ENTER THE SYSTEM
             </div>
-            <div className="cta-arrow text-lg" style={{ color: '#00ffd4' }}>▼</div>
+            <div className="cta-arrow text-lg opacity-60" style={{ color: '#00ffd4' }}>▼</div>
           </div>
         </div>
 
-        {/* What is this? — 更清楚的介紹 */}
-        <div className="mb-24 md:mb-32 fade-up">
-          <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-6 text-center" style={{ color: '#e8dfff' }}>
+        {/* What is this? — 簡潔介紹，只保留一個 accent 色 */}
+        <div className="mb-20 md:mb-28 fade-up">
+          <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-8 text-center" style={{ color: '#e8dfff' }}>
             ◢ WHAT IS THIS ◣
           </div>
-          <div className="max-w-3xl mx-auto space-y-5">
+          <div className="max-w-2xl mx-auto space-y-6">
             <p className="f-wenkai text-base md:text-lg leading-loose text-center" style={{ color: '#e8dfff' }}>
-              把散落在《黃帝內經》《本草綱目》《千金方》裡的<span style={{ color: '#00ffd4' }}>養生智慧</span>，
-              用<span style={{ color: '#ff00aa' }}>賽博龐克終端機</span>的方式重新裝訂——
-            </p>
-            <p className="f-wenkai text-base md:text-lg leading-loose text-center" style={{ color: '#e8dfff' }}>
-              每天打開只要<span style={{ color: '#ffee00' }}>勾幾個方格</span>、
-              練<span style={{ color: '#ffee00' }}>十息呼吸</span>、
-              寫幾筆<span style={{ color: '#ffee00' }}>當日心覺</span>，就完成了一日修煉。
+              把散落在《黃帝內經》《本草綱目》《千金方》裡的養生智慧，用賽博龐克終端機的方式重新裝訂。
             </p>
             <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-80" style={{ color: '#e8dfff' }}>
-              系統依據當下<span style={{ color: '#00ffd4' }}>節氣</span>給你配菜、配法、配呼吸節奏，
-              你只負責執行與觀察。
+              每天打開只要勾幾個方格、練十息呼吸、寫幾筆當日心覺，就完成了一日修煉。
+            </p>
+            <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-70" style={{ color: '#e8dfff' }}>
+              系統依據當下節氣給你配菜、配法、配呼吸節奏，你只負責執行與觀察。
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 fade-up fade-up-d1">
               {[
@@ -288,11 +297,11 @@ export default function Landing({ onAuthSuccess }) {
               ].map((s, i) => (
                 <div key={i} className="cyber-border-small p-3 text-center" style={{
                   background: 'rgba(20, 10, 35, 0.4)',
-                  border: '1px solid rgba(0, 255, 212, 0.15)',
+                  border: '1px solid rgba(0, 255, 212, 0.12)',
                 }}>
                   <div className="f-cyber text-[8px] tracking-[0.2em] opacity-40 mb-1" style={{ color: '#e8dfff' }}>{s.en}</div>
-                  <div className="f-cyber text-[10px] mb-1" style={{ color: '#00ffd4' }}>{s.label}</div>
-                  <div className="f-wenkai text-[11px] opacity-70" style={{ color: '#e8dfff' }}>{s.value}</div>
+                  <div className="f-wenkai text-[11px] mb-1 opacity-80" style={{ color: '#e8dfff' }}>{s.label}</div>
+                  <div className="f-cyber text-[10px] opacity-70" style={{ color: '#00ffd4' }}>{s.value}</div>
                 </div>
               ))}
             </div>
@@ -310,9 +319,9 @@ export default function Landing({ onAuthSuccess }) {
                 background: 'rgba(20, 10, 35, 0.6)',
                 border: '1px solid rgba(0, 255, 212, 0.2)',
               }}>
-                <div className={`kanji-float kanji-float-${i+1} f-serif-black text-5xl md:text-6xl mb-3 relative z-10`} style={{
-                  color: '#00ffd4',
-                  textShadow: '0 0 14px rgba(0, 255, 212, 0.5)',
+                <div className={`kanji-float kanji-float-${i+1} hero-title-font text-5xl md:text-6xl mb-3 relative z-10`} style={{
+                  color: '#f2ecff',
+                  textShadow: '0 0 14px rgba(0, 255, 212, 0.35), 0 0 28px rgba(0, 255, 212, 0.15)',
                 }}>{f.kanji}</div>
                 <div className="f-sans-black text-base md:text-lg mb-1 relative z-10" style={{ color: '#e8dfff' }}>{f.label}</div>
                 <div className="f-cyber text-[8px] md:text-[9px] tracking-widest opacity-60 mb-3 relative z-10" style={{ color: '#00ffd4' }}>{f.en}</div>
@@ -336,10 +345,10 @@ export default function Landing({ onAuthSuccess }) {
                 border: '1px solid rgba(0, 255, 212, 0.15)',
               }}>
                 <div className="flex-shrink-0 w-14 h-14 flex items-center justify-center cyber-border-small" style={{
-                  background: 'rgba(0, 255, 212, 0.08)',
-                  border: '1px solid rgba(0, 255, 212, 0.4)',
+                  background: 'rgba(0, 255, 212, 0.06)',
+                  border: '1px solid rgba(0, 255, 212, 0.3)',
                 }}>
-                  <span className="f-serif-black text-2xl" style={{ color: '#00ffd4', textShadow: '0 0 10px rgba(0, 255, 212, 0.5)' }}>{s.num}</span>
+                  <span className="hero-title-font text-2xl" style={{ color: '#f2ecff', textShadow: '0 0 10px rgba(0, 255, 212, 0.35)' }}>{s.num}</span>
                 </div>
                 <div className="flex-1 pt-1">
                   <div className="flex items-baseline gap-3 mb-1">
