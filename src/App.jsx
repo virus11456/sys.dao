@@ -51,7 +51,9 @@ export default function App() {
   
   const intervalRef = useRef(null);
   const prevCompletedRef = useRef({});
+  const [loadedDateStr, setLoadedDateStr] = useState(null); // 目前 UI 顯示的是哪一天的資料
 
+  // 初次 mount：載入今天 + 全域統計
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -64,10 +66,29 @@ export default function App() {
         if (ss) setStats(JSON.parse(ss.value));
         const sa = await window.storage?.get('cyber3_achievements');
         if (sa) setUnlockedAchievements(JSON.parse(sa.value));
+        setLoadedDateStr(today);
       } catch (e) {}
     };
     loadData();
   }, []);
+
+  // 跨日自動重載：tab 整夜開著過午夜，也會自動把今日/心覺重置為新一天的空白畫面
+  useEffect(() => {
+    if (!loadedDateStr) return;
+    const now = currentTime.toDateString();
+    if (now === loadedDateStr) return;
+    // 日期變了 —— 把今日/心覺 state 換成新一天（localStorage 裡若沒紀錄就是空白）
+    (async () => {
+      try {
+        const sc = await window.storage?.get(`cyber3_completed_${now}`);
+        setCompleted(sc ? JSON.parse(sc.value) : {});
+        const sl = await window.storage?.get(`cyber3_log_${now}`);
+        setTodayLog(sl ? JSON.parse(sl.value) : { drymouth: null, energy: null, sleep: null, notes: '' });
+        setExpanded(null);
+        setLoadedDateStr(now);
+      } catch (e) {}
+    })();
+  }, [currentTime, loadedDateStr]);
 
   useEffect(() => {
     const save = async () => {
