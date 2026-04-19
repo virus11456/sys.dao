@@ -230,7 +230,7 @@ export default function App() {
           }
           return 'inhale';
         });
-      }, 4000);
+      }, 6000); // 6 秒一相 (6-6-6-6 · 24 秒/息 · 2.5 息/分)，貼近道家中階節奏
       return () => clearInterval(cycle);
     }
   }, [showBreath]);
@@ -707,7 +707,7 @@ export default function App() {
           to   { stroke-dashoffset: 0; }
         }
         .phase-tick {
-          animation: phase-tick 4s linear;
+          animation: phase-tick 6s linear;
           animation-fill-mode: forwards;
         }
 
@@ -1722,7 +1722,7 @@ export default function App() {
 
           <div className="relative h-96 md:h-[28rem] lg:h-[32rem] flex items-center justify-center my-6 pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-80 h-80 md:w-96 md:h-96 lg:w-[28rem] lg:h-[28rem] rounded-full transition-all duration-[4000ms] ease-in-out" style={{
+              <div className="w-80 h-80 md:w-96 md:h-96 lg:w-[28rem] lg:h-[28rem] rounded-full transition-all duration-[6000ms] ease-in-out" style={{
                 background: showBreath ? `radial-gradient(circle, ${breathLabels[breathPhase].color}55 0%, transparent 70%)` : 'radial-gradient(circle, rgba(0, 255, 212, 0.15) 0%, transparent 70%)',
                 transform: showBreath ? `scale(${breathLabels[breathPhase].scale})` : 'scale(1)',
                 filter: 'blur(20px)'
@@ -1741,7 +1741,7 @@ export default function App() {
             </div>
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <svg width="280" height="280" viewBox="0 0 200 200" className="transition-transform duration-[4000ms] ease-in-out"
+              <svg width="280" height="280" viewBox="0 0 200 200" className="transition-transform duration-[6000ms] ease-in-out"
                 style={{ transform: showBreath ? `scale(${breathLabels[breathPhase].scale})` : 'scale(1)' }}>
                 {/* 外環：靜態邊界 */}
                 <circle cx="100" cy="100" r="90" fill="none"
@@ -1808,7 +1808,7 @@ export default function App() {
                     opacity: 0.9,
                     textShadow: `0 0 6px ${breathLabels[breathPhase].color}66`
                   }}>
-                    {breathLabels[breathPhase].en} · 4s
+                    {breathLabels[breathPhase].en} · 6s
                   </div>
                 </>
               ) : (
@@ -1845,30 +1845,86 @@ export default function App() {
 
           <div className="mt-6 terminal-card cyber-border p-4">
             <div className="f-cyber text-[10px] tracking-[0.3em] mb-3 neon-cyan">
-              ◢ <span className="f-sans-black" style={{ fontSize: '11px' }}>四相循環</span> · 4.PHASES
+              ◢ <span className="f-sans-black" style={{ fontSize: '11px' }}>四相循環</span> · 4.PHASES · 六秒一相
             </div>
-            <div className="space-y-2">
+            <div className="f-wenkai text-[11px] opacity-60 mb-4 leading-relaxed" style={{ color: '#e8dfff' }}>
+              一息分四相，每相六秒，一息二十四秒，約每分鐘二息半——漸近道家「四息/分」之古訓。不求極限，以不憋悶為度。
+            </div>
+            <div className="space-y-2.5">
               {[
-                { cn: '吸', en: 'INHALE', detail: '四秒・八分滿', color: '#00ffd4' },
-                { cn: '沉', en: 'SINK', detail: '四秒・沉至鎖骨', color: '#ffaa00' },
-                { cn: '吐', en: 'EXHALE', detail: '四秒・緩緩吐', color: '#ff00aa' },
-                { cn: '空', en: 'VOID', detail: '四秒・自然停', color: '#a78bfa' },
+                {
+                  cn: '吸', en: 'INHALE', color: '#00ffd4',
+                  summary: '六秒 · 八分滿',
+                  act: '鼻緩吸，氣沉丹田，腹微隆，胸不擴',
+                  mind: '引後天之氣下納炁穴',
+                  goal: '納新以養營氣',
+                  sign: '下腹微張、肩自垂'
+                },
+                {
+                  cn: '沉', en: 'SINK', color: '#ffaa00',
+                  summary: '六秒 · 沉至鎖骨',
+                  act: '停吸不吐，氣停丹田而不逸',
+                  mind: '神凝不散，只守呼吸本身',
+                  goal: '固氣入穴，營衛待行',
+                  sign: '心跳漸緩、口中津生'
+                },
+                {
+                  cn: '吐', en: 'EXHALE', color: '#ff00aa',
+                  summary: '六秒 · 緩緩吐',
+                  act: '鼻細吐，細而長，勿猛',
+                  mind: '濁氣隨出，五臟自潔',
+                  goal: '吐故以濡衛氣',
+                  sign: '肩自鬆、身輕、煩意散'
+                },
+                {
+                  cn: '空', en: 'VOID', color: '#a78bfa',
+                  summary: '六秒 · 自然停',
+                  act: '不吸不吐，任其自然',
+                  mind: '身安不動，心如止水',
+                  goal: '一氣還原，返先天之真',
+                  sign: '一瞬靜定、似有似無'
+                },
               ].map((p, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 cyber-border-small" style={{
-                  background: `${p.color}08`, border: `1px solid ${p.color}22`
+                <div key={i} className="p-3 cyber-border-small" style={{
+                  background: `${p.color}0a`, border: `1px solid ${p.color}33`
                 }}>
-                  <div className="f-serif-black text-4xl w-12 h-12 flex items-center justify-center" style={{
-                    color: p.color,
-                    textShadow: `0 0 10px ${p.color}, 0 0 20px ${p.color}66`,
-                    lineHeight: 1
-                  }}>{p.cn}</div>
-                  <div className="flex-1">
-                    <div className="f-sans-black text-sm">第{['一','二','三','四'][i]}相 · {p.cn}</div>
-                    <div className="f-cyber text-[9px] opacity-60 tracking-widest">{p.en}</div>
+                  <div className="flex items-start gap-3">
+                    <div className="f-serif-black text-4xl w-12 h-12 flex items-center justify-center shrink-0" style={{
+                      color: p.color,
+                      textShadow: `0 0 10px ${p.color}, 0 0 20px ${p.color}66`,
+                      lineHeight: 1
+                    }}>{p.cn}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <div className="f-sans-black text-sm" style={{ color: '#e8dfff' }}>第{['一','二','三','四'][i]}相 · {p.cn}</div>
+                        <div className="f-cyber text-[9px] opacity-60 tracking-widest" style={{ color: p.color }}>{p.en}</div>
+                      </div>
+                      <div className="f-wenkai text-[11px] opacity-70 mb-2" style={{ color: '#e8dfff' }}>{p.summary}</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-[11px] f-wenkai" style={{ color: '#e8dfff' }}>
+                        <div className="flex gap-2">
+                          <span className="f-cyber text-[9px] tracking-widest opacity-40 shrink-0 w-8" style={{ color: p.color }}>動作</span>
+                          <span className="opacity-85">{p.act}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="f-cyber text-[9px] tracking-widest opacity-40 shrink-0 w-8" style={{ color: p.color }}>用意</span>
+                          <span className="opacity-85">{p.mind}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="f-cyber text-[9px] tracking-widest opacity-40 shrink-0 w-8" style={{ color: p.color }}>要旨</span>
+                          <span className="opacity-85">{p.goal}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="f-cyber text-[9px] tracking-widest opacity-40 shrink-0 w-8" style={{ color: p.color }}>徵候</span>
+                          <span className="opacity-85">{p.sign}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="f-wenkai text-xs opacity-80">{p.detail}</div>
                 </div>
               ))}
+            </div>
+            <div className="mt-4 pt-3 f-wenkai text-[10px] opacity-50 leading-relaxed" style={{ color: '#e8dfff', borderTop: '1px dashed rgba(0, 255, 212, 0.15)' }}>
+              ◯ 初學者若六秒有憋悶感，可先回四秒，待自然放鬆再延長；切勿勉強。素門吐納法以身為主，不以秒為標。
             </div>
           </div>
 
