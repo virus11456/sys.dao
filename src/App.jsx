@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ensureAuth, pullAll, queuePush, getRecoveryCode, restoreFromCode, signOutLocal, getUserId } from './sync.js';
+import { getSession, getUser, signUpWithEmail, signInWithEmail, signOut, pullAll, pushAllLocal, queuePush, sb } from './sync.js';
 
 // -------- window.storage -> localStorage + Supabase shim --------
 // The original app was written against a Claude artifact window.storage API.
@@ -58,27 +58,57 @@ export default function App() {
   const [loadedDateStr, setLoadedDateStr] = useState(null); // 目前 UI 顯示的是哪一天的資料
 
   // 雲端同步狀態
-  const [syncState, setSyncState] = useState({ status: 'idle', uid: null, msg: '' });
+  const [syncState, setSyncState] = useState({ status: 'idle', user: null, msg: '' });
   const [showSyncPanel, setShowSyncPanel] = useState(false);
-  const [recoveryCode, setRecoveryCode] = useState('');
-  const [restoreInput, setRestoreInput] = useState('');
+  const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authBusy, setAuthBusy] = useState(false);
 
-  // 初次 mount：先雲端同步（pull），再載入今天 + 全域統計
+  // 共用：登入成功後的流程 — pull 雲端、把本機資料推上去、重載 state
+  const refreshAfterAuth = async () => {
+    const user = await getUser();
+    setSyncState({ status: 'syncing', user, msg: '同步中…' });
+    const pull = await pullAll();
+    const push = await pushAllLocal();
+    const errMsg = pull.error?.message || push.error?.message;
+    setSyncState({
+      status: errMsg ? 'error' : 'ok',
+      user,
+      msg: errMsg ? `同步失敗：${errMsg}` : `拉取 ${pull.pulled} 筆 / 推送 ${push.pushed} 筆`,
+    });
+    // 重新把 localStorage 倒回 state
+    const today = new Date().toDateString();
+    const sc = await window.storage?.get(`cyber3_completed_${today}`);
+    setCompleted(sc ? JSON.parse(sc.value) : {});
+    const sl = await window.storage?.get(`cyber3_log_${today}`);
+    setTodayLog(sl ? JSON.parse(sl.value) : { drymouth: null, energy: null, sleep: null, notes: '' });
+    const ss = await window.storage?.get('cyber3_stats');
+    if (ss) setStats(JSON.parse(ss.value));
+    const sa = await window.storage?.get('cyber3_achievements');
+    if (sa) setUnlockedAchievements(JSON.parse(sa.value));
+  };
+
+  // 初次 mount：檢查 session，若已登入則 pull 雲端；再載入今天 + 全域統計
   useEffect(() => {
     const loadData = async () => {
-      // 1) 嘗試匿名登入 + pull 雲端資料（失敗不 block app 運作）
+      // 1) 檢查是否已登入（session 會由 supabase-js 從 localStorage 自動恢復）
       try {
-        setSyncState(s => ({ ...s, status: 'syncing' }));
-        await ensureAuth();
-        const { pulled, error } = await pullAll();
-        const uid = await getUserId();
-        setSyncState({
-          status: error ? 'error' : 'ok',
-          uid,
-          msg: error ? `同步失敗：${error.message || '未知錯誤'}` : (pulled > 0 ? `拉取 ${pulled} 筆雲端紀錄` : '已是最新'),
-        });
+        const session = await getSession();
+        const user = session?.user || null;
+        if (session) {
+          setSyncState({ status: 'syncing', user, msg: '同步中…' });
+          const { pulled, error } = await pullAll();
+          setSyncState({
+            status: error ? 'error' : 'ok',
+            user,
+            msg: error ? `同步失敗：${error.message}` : (pulled > 0 ? `拉取 ${pulled} 筆` : '已是最新'),
+          });
+        } else {
+          setSyncState({ status: 'offline', user: null, msg: '未登入 · 純本機模式' });
+        }
       } catch (e) {
-        setSyncState({ status: 'error', uid: null, msg: `雲端連線失敗：${e.message || e}` });
+        setSyncState({ status: 'error', user: null, msg: `載入失敗：${e.message || e}` });
       }
       // 2) 讀 localStorage（已可能被 pullAll 刷新）塞入 state
       try {
@@ -95,6 +125,16 @@ export default function App() {
       } catch (e) {}
     };
     loadData();
+
+    // 訂閱 auth state 變化：登入/登出時即時更新 UI
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      setSyncState(s => ({
+        ...s,
+        user: session?.user || null,
+        status: session ? 'ok' : 'offline',
+      }));
+    });
+    return () => subscription?.unsubscribe();
   }, []);
 
   // 跨日自動重載：tab 整夜開著過午夜，也會自動把今日/心覺重置為新一天的空白畫面
@@ -2372,7 +2412,7 @@ export default function App() {
               </div>
             )}
 
-            {/* 雲端同步面板 */}
+            {/* 雲端同步面板 — email/password 版 */}
             <div className="cyber-border-small p-3" style={{
               background: 'rgba(0, 255, 212, 0.03)', border: '1px solid rgba(0, 255, 212, 0.15)'
             }}>
@@ -2380,20 +2420,21 @@ export default function App() {
                 onClick={() => setShowSyncPanel(v => !v)}
                 className="w-full flex items-center justify-between gap-2"
               >
-                <div className="flex items-center gap-2">
-                  <span className="f-cyber text-[10px] tracking-[0.3em]" style={{
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="f-cyber text-[10px] tracking-[0.3em] flex-shrink-0" style={{
                     color: syncState.status === 'ok' ? '#00ffd4' : syncState.status === 'syncing' ? '#ffee00' : syncState.status === 'error' ? '#ff00aa' : 'rgba(232, 223, 255, 0.4)'
                   }}>
                     ◉ CLOUD
                   </span>
-                  <span className="f-wenkai text-[11px] opacity-70" style={{ color: '#e8dfff' }}>
-                    {syncState.status === 'ok' && '已連雲端'}
+                  <span className="f-wenkai text-[11px] opacity-70 truncate" style={{ color: '#e8dfff' }}>
+                    {syncState.status === 'ok' && syncState.user && `已登入 · ${syncState.user.email}`}
                     {syncState.status === 'syncing' && '同步中…'}
-                    {syncState.status === 'error' && '離線（本機優先）'}
-                    {syncState.status === 'idle' && '未初始化'}
+                    {syncState.status === 'error' && '連線異常（本機優先）'}
+                    {syncState.status === 'offline' && '未登入 · 純本機模式'}
+                    {syncState.status === 'idle' && '初始化中…'}
                   </span>
                 </div>
-                <span className="f-cyber text-[10px] opacity-50">{showSyncPanel ? '▲' : '▼'}</span>
+                <span className="f-cyber text-[10px] opacity-50 flex-shrink-0">{showSyncPanel ? '▲' : '▼'}</span>
               </button>
 
               {showSyncPanel && (
@@ -2403,126 +2444,144 @@ export default function App() {
                       {syncState.msg}
                     </div>
                   )}
-                  {syncState.uid && (
-                    <div className="f-cyber text-[9px] opacity-40 break-all" style={{ color: '#e8dfff' }}>
-                      UID · {syncState.uid}
-                    </div>
-                  )}
 
-                  {/* 顯示恢復碼 */}
-                  <div className="space-y-1.5">
-                    <button
-                      onClick={async () => {
-                        const code = await getRecoveryCode();
-                        setRecoveryCode(code || '（尚未登入）');
-                      }}
-                      className="w-full py-2 text-sm f-cyber btn-neon cyber-border-small"
-                    >
-                      ▸ 顯示恢復碼
-                    </button>
-                    {recoveryCode && (
-                      <div className="p-2 cyber-border-small text-[10px] f-cyber break-all select-all" style={{
-                        background: 'rgba(255, 238, 0, 0.05)',
-                        border: '1px solid rgba(255, 238, 0, 0.3)',
-                        color: '#ffee00',
-                        maxHeight: '120px',
-                        overflowY: 'auto',
+                  {/* 已登入 UI */}
+                  {syncState.user ? (
+                    <>
+                      <div className="p-2 cyber-border-small" style={{
+                        background: 'rgba(0, 255, 212, 0.05)',
+                        border: '1px solid rgba(0, 255, 212, 0.2)',
                       }}>
-                        {recoveryCode}
+                        <div className="f-cyber text-[9px] tracking-[0.3em] opacity-50 mb-1">ACCOUNT</div>
+                        <div className="f-cyber text-[11px] break-all" style={{ color: '#00ffd4' }}>
+                          {syncState.user.email}
+                        </div>
                       </div>
-                    )}
-                    {recoveryCode && recoveryCode !== '（尚未登入）' && (
-                      <div className="f-wenkai text-[10px] opacity-50" style={{ color: '#e8dfff' }}>
-                        ⚠ 複製後妥善保存 · 換裝置時貼上即可同步全部資料
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            try {
+                              setSyncState(s => ({ ...s, status: 'syncing', msg: '手動同步中…' }));
+                              const pull = await pullAll();
+                              const push = await pushAllLocal();
+                              const errMsg = pull.error?.message || push.error?.message;
+                              setSyncState(s => ({
+                                ...s,
+                                status: errMsg ? 'error' : 'ok',
+                                msg: errMsg ? `失敗：${errMsg}` : `拉取 ${pull.pulled} 筆 / 推送 ${push.pushed} 筆`,
+                              }));
+                            } catch (e) {
+                              setSyncState(s => ({ ...s, status: 'error', msg: `失敗：${e.message || e}` }));
+                            }
+                          }}
+                          className="flex-1 py-1.5 text-xs f-cyber btn-neon cyber-border-small"
+                        >
+                          ↻ 立即同步
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm('確定要登出嗎？雲端資料不會刪除，下次登入還能取回。')) return;
+                            await signOut();
+                            setSyncState({ status: 'offline', user: null, msg: '已登出' });
+                          }}
+                          className="px-3 py-1.5 text-xs f-cyber btn-neon-pink cyber-border-small"
+                        >
+                          ⎋ 登出
+                        </button>
                       </div>
-                    )}
-                  </div>
 
-                  {/* 貼上恢復碼 */}
-                  <div className="space-y-1.5">
-                    <textarea
-                      value={restoreInput}
-                      onChange={e => setRestoreInput(e.target.value)}
-                      placeholder="在此貼上恢復碼…"
-                      className="w-full px-2 py-2 text-[10px] f-cyber cyber-border-small"
-                      style={{
-                        background: 'rgba(20, 10, 35, 0.5)',
-                        border: '1px solid rgba(0, 255, 212, 0.15)',
-                        color: '#e8dfff',
-                        minHeight: '60px',
-                        resize: 'vertical',
-                      }}
-                    />
-                    <button
-                      onClick={async () => {
-                        try {
-                          setSyncState(s => ({ ...s, status: 'syncing', msg: '正在恢復…' }));
-                          await restoreFromCode(restoreInput);
-                          const { pulled, error } = await pullAll();
-                          const uid = await getUserId();
-                          setSyncState({
-                            status: error ? 'error' : 'ok',
-                            uid,
-                            msg: error ? `拉取失敗：${error.message}` : `已恢復並拉取 ${pulled} 筆`,
-                          });
-                          setRestoreInput('');
-                          // 重新把 localStorage 資料倒回 state
-                          const today = new Date().toDateString();
-                          const sc = await window.storage?.get(`cyber3_completed_${today}`);
-                          setCompleted(sc ? JSON.parse(sc.value) : {});
-                          const sl = await window.storage?.get(`cyber3_log_${today}`);
-                          setTodayLog(sl ? JSON.parse(sl.value) : { drymouth: null, energy: null, sleep: null, notes: '' });
-                          const ss = await window.storage?.get('cyber3_stats');
-                          if (ss) setStats(JSON.parse(ss.value));
-                          const sa = await window.storage?.get('cyber3_achievements');
-                          if (sa) setUnlockedAchievements(JSON.parse(sa.value));
-                        } catch (e) {
-                          setSyncState(s => ({ ...s, status: 'error', msg: `恢復失敗：${e.message || e}` }));
-                        }
-                      }}
-                      className="w-full py-2 text-sm f-cyber btn-neon-pink cyber-border-small"
-                    >
-                      ▸ 用恢復碼登入
-                    </button>
-                  </div>
+                      <div className="f-wenkai text-[10px] opacity-40 pt-1" style={{ color: '#e8dfff' }}>
+                        ◯ 勾選/填寫 → 自動同步 · 換裝置登入同一帳號即可還原
+                      </div>
+                    </>
+                  ) : (
+                    /* 未登入 UI — 登入 / 註冊表單 */
+                    <>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setAuthMode('signin')}
+                          className="flex-1 py-1.5 text-xs f-cyber cyber-border-small"
+                          style={{
+                            background: authMode === 'signin' ? 'rgba(0, 255, 212, 0.15)' : 'rgba(20, 10, 35, 0.5)',
+                            border: authMode === 'signin' ? '1px solid rgba(0, 255, 212, 0.5)' : '1px solid rgba(0, 255, 212, 0.15)',
+                            color: authMode === 'signin' ? '#00ffd4' : 'rgba(232, 223, 255, 0.6)',
+                          }}
+                        >
+                          登入 · SIGN IN
+                        </button>
+                        <button
+                          onClick={() => setAuthMode('signup')}
+                          className="flex-1 py-1.5 text-xs f-cyber cyber-border-small"
+                          style={{
+                            background: authMode === 'signup' ? 'rgba(255, 0, 170, 0.15)' : 'rgba(20, 10, 35, 0.5)',
+                            border: authMode === 'signup' ? '1px solid rgba(255, 0, 170, 0.5)' : '1px solid rgba(255, 0, 170, 0.15)',
+                            color: authMode === 'signup' ? '#ff00aa' : 'rgba(232, 223, 255, 0.6)',
+                          }}
+                        >
+                          註冊 · SIGN UP
+                        </button>
+                      </div>
 
-                  {/* 立即同步 / 登出 */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={async () => {
-                        try {
-                          setSyncState(s => ({ ...s, status: 'syncing', msg: '手動同步中…' }));
-                          const { pulled, error } = await pullAll();
-                          const uid = await getUserId();
-                          setSyncState({
-                            status: error ? 'error' : 'ok',
-                            uid,
-                            msg: error ? `失敗：${error.message}` : (pulled > 0 ? `拉取 ${pulled} 筆` : '已是最新'),
-                          });
-                        } catch (e) {
-                          setSyncState(s => ({ ...s, status: 'error', msg: `失敗：${e.message || e}` }));
-                        }
-                      }}
-                      className="flex-1 py-1.5 text-xs f-cyber btn-neon cyber-border-small"
-                    >
-                      ↻ 立即同步
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!confirm('確定要在本機登出嗎？雲端資料不會刪除，但本機會切斷連線。')) return;
-                        await signOutLocal();
-                        setSyncState({ status: 'idle', uid: null, msg: '已登出本機' });
-                        setRecoveryCode('');
-                      }}
-                      className="px-3 py-1.5 text-xs f-cyber btn-neon-pink cyber-border-small"
-                    >
-                      ⎋ 登出
-                    </button>
-                  </div>
+                      <div className="space-y-1.5">
+                        <input
+                          type="email"
+                          value={authEmail}
+                          onChange={e => setAuthEmail(e.target.value)}
+                          placeholder="email"
+                          autoComplete="email"
+                          className="w-full px-2 py-2 text-[11px] f-cyber cyber-border-small"
+                          style={{
+                            background: 'rgba(20, 10, 35, 0.5)',
+                            border: '1px solid rgba(0, 255, 212, 0.15)',
+                            color: '#e8dfff',
+                          }}
+                        />
+                        <input
+                          type="password"
+                          value={authPassword}
+                          onChange={e => setAuthPassword(e.target.value)}
+                          placeholder="password (至少 6 字元)"
+                          autoComplete={authMode === 'signin' ? 'current-password' : 'new-password'}
+                          className="w-full px-2 py-2 text-[11px] f-cyber cyber-border-small"
+                          style={{
+                            background: 'rgba(20, 10, 35, 0.5)',
+                            border: '1px solid rgba(0, 255, 212, 0.15)',
+                            color: '#e8dfff',
+                          }}
+                        />
+                      </div>
 
-                  <div className="f-wenkai text-[10px] opacity-40 pt-1" style={{ color: '#e8dfff' }}>
-                    ◯ 勾選/填寫 → 自動同步雲端 · 換裝置用恢復碼即可還原
-                  </div>
+                      <button
+                        disabled={authBusy || !authEmail || !authPassword}
+                        onClick={async () => {
+                          setAuthBusy(true);
+                          try {
+                            setSyncState(s => ({ ...s, status: 'syncing', msg: authMode === 'signup' ? '註冊中…' : '登入中…' }));
+                            if (authMode === 'signup') {
+                              await signUpWithEmail(authEmail.trim(), authPassword);
+                            } else {
+                              await signInWithEmail(authEmail.trim(), authPassword);
+                            }
+                            setAuthPassword('');
+                            await refreshAfterAuth();
+                          } catch (e) {
+                            setSyncState(s => ({ ...s, status: 'error', msg: `${authMode === 'signup' ? '註冊' : '登入'}失敗：${e.message || e}` }));
+                          } finally {
+                            setAuthBusy(false);
+                          }
+                        }}
+                        className="w-full py-2 text-sm f-cyber btn-neon cyber-border-small"
+                        style={{ opacity: (authBusy || !authEmail || !authPassword) ? 0.5 : 1 }}
+                      >
+                        {authBusy ? '…' : (authMode === 'signup' ? '▸ 註冊並登入' : '▸ 登入')}
+                      </button>
+
+                      <div className="f-wenkai text-[10px] opacity-40 pt-1" style={{ color: '#e8dfff' }}>
+                        ◯ 不登入也能用（資料只存本機）· 登入後本機資料會自動上傳
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

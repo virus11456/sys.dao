@@ -45,15 +45,13 @@ create policy "own rows delete" on public.kv_sync
 
 ---
 
-## 2. 啟用匿名登入
+## 2. 設定 Auth
 
-預設是關的，必須手動開：
+進到 https://supabase.com/dashboard/project/cvbvijdmqpkdbntegmqf/auth/providers
 
-1. 進到 https://supabase.com/dashboard/project/cvbvijdmqpkdbntegmqf/auth/providers
-2. 找到 **Anonymous Sign-Ins**（通常在列表最上面附近）
-3. 把 toggle 打開 → Save
-
-這樣 sys.dao 第一次開啟時就會自動幫你建立一個匿名帳號，你完全不用打字。
+- **Email 登入**：預設就是開的，不用動
+- **Confirm email**：建議**關掉**（個人用免等驗證信） → Save changes
+- （舊版：Anonymous Sign-Ins — 現在沒用到，不管它）
 
 ---
 
@@ -85,12 +83,19 @@ npm run dev
 
 ## 使用方式
 
-在 sys.dao 裡進「往日」tab，滑到最底：
+在 sys.dao 裡進「往日」tab，滑到最底找「◉ CLOUD」面板：
 
-- **顯示恢復碼** → 複製後妥善保存（這是你換裝置時的「救命稻草」）
-- **貼上恢復碼 → 用恢復碼登入** → 換手機/換電腦時貼上就恢復所有資料
-- **立即同步** → 手動拉一次雲端最新
-- **登出** → 只是切斷本機跟這個雲端帳號的連結，雲端資料不會刪
+**第一次使用（任何裝置）：**
+- 按「註冊 · SIGN UP」→ 填 email + 密碼（≥6 字）→ 按「▸ 註冊並登入」
+- 本機所有歷史資料會自動 push 上雲
+
+**換裝置同步：**
+- 在新裝置打開 app → CLOUD 面板「登入 · SIGN IN」→ 填同一組 email/密碼
+- 雲端資料會自動拉下來
+
+**其他：**
+- **立即同步** → 手動雙向同步（pull + push）
+- **登出** → 切斷本機與雲端連線，本機資料仍在 localStorage
 
 ---
 
