@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getSession, getUser, signUpWithEmail, signInWithEmail, signOut, pullAll, pushAllLocal, queuePush, sb } from './sync.js';
+import Landing from './Landing.jsx';
 
 // -------- window.storage -> localStorage + Supabase shim --------
 // The original app was written against a Claude artifact window.storage API.
@@ -60,10 +61,7 @@ export default function App() {
   // 雲端同步狀態
   const [syncState, setSyncState] = useState({ status: 'idle', user: null, msg: '' });
   const [showSyncPanel, setShowSyncPanel] = useState(false);
-  const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [authBusy, setAuthBusy] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false); // getSession 是否已解析完成
 
   // 共用：登入成功後的流程 — pull 雲端、把本機資料推上去、重載 state
   const refreshAfterAuth = async () => {
@@ -105,10 +103,12 @@ export default function App() {
             msg: error ? `同步失敗：${error.message}` : (pulled > 0 ? `拉取 ${pulled} 筆` : '已是最新'),
           });
         } else {
-          setSyncState({ status: 'offline', user: null, msg: '未登入 · 純本機模式' });
+          setSyncState({ status: 'offline', user: null, msg: '' });
         }
       } catch (e) {
         setSyncState({ status: 'error', user: null, msg: `載入失敗：${e.message || e}` });
+      } finally {
+        setAuthChecked(true);
       }
       // 2) 讀 localStorage（已可能被 pullAll 刷新）塞入 state
       try {
@@ -1056,6 +1056,16 @@ export default function App() {
         .warning-pulse { animation: warning-pulse 1.5s ease-in-out infinite; }
       `}</style>
 
+      {!authChecked ? (
+        <div className="flex items-center justify-center" style={{ minHeight: '100vh' }}>
+          <div className="f-cyber text-xs tracking-[0.3em] opacity-60" style={{ color: '#00ffd4', animation: 'pulse 1.5s ease-in-out infinite' }}>
+            ⧗ INITIALIZING · 載入中
+          </div>
+        </div>
+      ) : !syncState.user ? (
+        <Landing onAuthSuccess={refreshAfterAuth} />
+      ) : (
+      <>
       {/* 網格背景 */}
       <div className="fixed inset-0 pointer-events-none opacity-30" style={{
         backgroundImage: `
@@ -2445,8 +2455,8 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* 已登入 UI */}
-                  {syncState.user ? (
+                  {/* 已登入 UI（app 已被登入鎖住，未登入不會走到這裡） */}
+                  {syncState.user && (
                     <>
                       <div className="p-2 cyber-border-small" style={{
                         background: 'rgba(0, 255, 212, 0.05)',
@@ -2495,92 +2505,6 @@ export default function App() {
                         ◯ 勾選/填寫 → 自動同步 · 換裝置登入同一帳號即可還原
                       </div>
                     </>
-                  ) : (
-                    /* 未登入 UI — 登入 / 註冊表單 */
-                    <>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => setAuthMode('signin')}
-                          className="flex-1 py-1.5 text-xs f-cyber cyber-border-small"
-                          style={{
-                            background: authMode === 'signin' ? 'rgba(0, 255, 212, 0.15)' : 'rgba(20, 10, 35, 0.5)',
-                            border: authMode === 'signin' ? '1px solid rgba(0, 255, 212, 0.5)' : '1px solid rgba(0, 255, 212, 0.15)',
-                            color: authMode === 'signin' ? '#00ffd4' : 'rgba(232, 223, 255, 0.6)',
-                          }}
-                        >
-                          登入 · SIGN IN
-                        </button>
-                        <button
-                          onClick={() => setAuthMode('signup')}
-                          className="flex-1 py-1.5 text-xs f-cyber cyber-border-small"
-                          style={{
-                            background: authMode === 'signup' ? 'rgba(255, 0, 170, 0.15)' : 'rgba(20, 10, 35, 0.5)',
-                            border: authMode === 'signup' ? '1px solid rgba(255, 0, 170, 0.5)' : '1px solid rgba(255, 0, 170, 0.15)',
-                            color: authMode === 'signup' ? '#ff00aa' : 'rgba(232, 223, 255, 0.6)',
-                          }}
-                        >
-                          註冊 · SIGN UP
-                        </button>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <input
-                          type="email"
-                          value={authEmail}
-                          onChange={e => setAuthEmail(e.target.value)}
-                          placeholder="email"
-                          autoComplete="email"
-                          className="w-full px-2 py-2 text-[11px] f-cyber cyber-border-small"
-                          style={{
-                            background: 'rgba(20, 10, 35, 0.5)',
-                            border: '1px solid rgba(0, 255, 212, 0.15)',
-                            color: '#e8dfff',
-                          }}
-                        />
-                        <input
-                          type="password"
-                          value={authPassword}
-                          onChange={e => setAuthPassword(e.target.value)}
-                          placeholder="password (至少 6 字元)"
-                          autoComplete={authMode === 'signin' ? 'current-password' : 'new-password'}
-                          className="w-full px-2 py-2 text-[11px] f-cyber cyber-border-small"
-                          style={{
-                            background: 'rgba(20, 10, 35, 0.5)',
-                            border: '1px solid rgba(0, 255, 212, 0.15)',
-                            color: '#e8dfff',
-                          }}
-                        />
-                      </div>
-
-                      <button
-                        disabled={authBusy || !authEmail || !authPassword}
-                        onClick={async () => {
-                          setAuthBusy(true);
-                          try {
-                            setSyncState(s => ({ ...s, status: 'syncing', msg: authMode === 'signup' ? '註冊中…' : '登入中…' }));
-                            if (authMode === 'signup') {
-                              await signUpWithEmail(authEmail.trim(), authPassword);
-                            } else {
-                              await signInWithEmail(authEmail.trim(), authPassword);
-                            }
-                            setAuthPassword('');
-                            await refreshAfterAuth();
-                          } catch (e) {
-                            setSyncState(s => ({ ...s, status: 'error', msg: `${authMode === 'signup' ? '註冊' : '登入'}失敗：${e.message || e}` }));
-                          } finally {
-                            setAuthBusy(false);
-                          }
-                        }}
-                        className="w-full py-2 text-sm f-cyber btn-neon cyber-border-small"
-                        style={{ opacity: (authBusy || !authEmail || !authPassword) ? 0.5 : 1 }}
-                      >
-                        {authBusy ? '…' : (authMode === 'signup' ? '▸ 註冊並登入' : '▸ 登入')}
-                      </button>
-
-                      <div className="f-wenkai text-[10px] opacity-40 pt-1" style={{ color: '#e8dfff' }}>
-                        ◯ 不登入也能用（資料只存本機）· 登入後本機資料會自動上傳
-                      </div>
-                    </>
                   )}
                 </div>
               )}
@@ -2588,6 +2512,7 @@ export default function App() {
           </div>
         );
       })()}
+      </>)}
 
     </div>
   );
