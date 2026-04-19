@@ -276,17 +276,20 @@ export default function Landing({ onAuthSuccess }) {
           </div>
         </div>
 
-        {/* What is this? — 上古煉氣 × 先天一氣 × 營衛 */}
+        {/* What is this? — 先天→營→衛 修煉鏈 */}
         <div className="mb-20 md:mb-28 fade-up">
           <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-8 text-center" style={{ color: '#e8dfff' }}>
             ◢ WHAT IS THIS ◣
           </div>
           <div className="max-w-2xl mx-auto space-y-7">
             <p className="f-wenkai text-base md:text-lg leading-loose text-center" style={{ color: '#e8dfff' }}>
-              sys.dao 以「上古煉氣之法」為本——後天呼吸浮於胸膈，煉氣則直貫丹田，<span style={{ color: '#00ffd4' }}>返還先天一氣</span>。
+              sys.dao 以「上古煉氣之法」為本——後天呼吸浮於胸膈，煉氣則直貫丹田，<span style={{ color: '#00ffd4' }}>先返還先天一氣</span>。
             </p>
             <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-85" style={{ color: '#e8dfff' }}>
-              一氣既充，<span style={{ color: '#00ffd4' }}>營氣</span>循脈以濡養五臟，<span style={{ color: '#00ffd4' }}>衛氣</span>充表以抵百病。神自凝、心自喜、百脈自調。
+              一氣既得，內補<span style={{ color: '#00ffd4' }}>營氣</span>——<span style={{ color: '#00ffd4' }}>神營氣滿</span>，五臟自調。
+            </p>
+            <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-85" style={{ color: '#e8dfff' }}>
+              營氣既充，外達肌表——<span style={{ color: '#00ffd4' }}>衛氣盈</span>，百病不生。
             </p>
             <p className="f-wenkai text-base md:text-lg leading-loose text-center opacity-75" style={{ color: '#e8dfff' }}>
               節氣為律 · 吐納為本 · 心覺為鏡。不精研陰陽，讓身體做主；依法而行，自有所感。
@@ -309,22 +312,40 @@ export default function Landing({ onAuthSuccess }) {
               </div>
             </div>
 
-            {/* 三氣結構 spec chips */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 fade-up fade-up-d2">
-              {[
-                { tag: '先天一氣', en: 'PRIMORDIAL', desc: '煉氣直貫丹田 · 返還本源' },
-                { tag: '營氣', en: 'YING · NUTRITIVE', desc: '行脈中 · 濡養五臟六腑' },
-                { tag: '衛氣', en: 'WEI · DEFENSIVE', desc: '充肌表 · 百病不侵' },
-              ].map((s, i) => (
-                <div key={i} className="cyber-border-small p-3" style={{
-                  background: 'rgba(20, 10, 35, 0.5)',
-                  border: '1px solid rgba(0, 255, 212, 0.15)',
-                }}>
-                  <div className="f-cyber text-[8px] tracking-[0.25em] opacity-50 mb-1" style={{ color: '#00ffd4' }}>{s.en}</div>
-                  <div className="f-serif-black text-base mb-1.5" style={{ color: '#f2ecff' }}>{s.tag}</div>
-                  <div className="f-wenkai text-[11px] leading-relaxed opacity-70" style={{ color: '#e8dfff' }}>{s.desc}</div>
-                </div>
-              ))}
+            {/* 三氣修煉鏈 — 編號 + 箭頭 */}
+            <div className="pt-2 fade-up fade-up-d2">
+              <div className="f-cyber text-[10px] tracking-[0.3em] opacity-50 mb-3 text-center" style={{ color: '#00ffd4' }}>
+                ◆ 三氣次第 · ORDER OF CULTIVATION
+              </div>
+              <div className="flex flex-col md:flex-row items-stretch gap-2 md:gap-0">
+                {[
+                  { n: '壹', tag: '先天一氣', en: 'PRIMORDIAL', desc: '吐納直貫丹田 · 返還本源', effect: '一氣既得' },
+                  { n: '貳', tag: '營氣', en: 'YING · NUTRITIVE', desc: '行脈中 · 濡養五臟六腑', effect: '神營氣滿' },
+                  { n: '參', tag: '衛氣', en: 'WEI · DEFENSIVE', desc: '充肌表 · 百病不生', effect: '衛氣充盈' },
+                ].map((s, i, arr) => (
+                  <React.Fragment key={i}>
+                    <div className="flex-1 cyber-border-small p-3" style={{
+                      background: 'rgba(20, 10, 35, 0.5)',
+                      border: '1px solid rgba(0, 255, 212, 0.18)',
+                    }}>
+                      <div className="flex items-baseline gap-2 mb-1.5">
+                        <span className="hero-title-font text-xl" style={{ color: '#00ffd4' }}>{s.n}</span>
+                        <span className="f-serif-black text-base" style={{ color: '#f2ecff' }}>{s.tag}</span>
+                      </div>
+                      <div className="f-cyber text-[8px] tracking-[0.25em] opacity-50 mb-1.5" style={{ color: '#00ffd4' }}>{s.en}</div>
+                      <div className="f-wenkai text-[11px] leading-relaxed opacity-75 mb-2" style={{ color: '#e8dfff' }}>{s.desc}</div>
+                      <div className="f-cyber text-[10px] tracking-widest pt-2" style={{ color: '#00ffd4', borderTop: '1px dashed rgba(0, 255, 212, 0.2)' }}>
+                        → {s.effect}
+                      </div>
+                    </div>
+                    {i < arr.length - 1 && (
+                      <div className="flex items-center justify-center f-cyber text-base opacity-50 md:px-2 py-1 md:py-0 rotate-90 md:rotate-0" style={{ color: '#00ffd4' }}>
+                        ▸
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
         </div>
