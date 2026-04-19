@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ensureAuth, pullAll, queuePush, getRecoveryCode, restoreFromCode, signOutLocal, getUserId } from './sync.js';
 
-// -------- window.storage -> localStorage shim --------
+// -------- window.storage -> localStorage + Supabase shim --------
 // The original app was written against a Claude artifact window.storage API.
 // This shim implements the same async {get(key) -> {value}}/{set(key, value)}
-// contract on top of the browser's localStorage so all original call sites
-// keep working unchanged.
+// contract on top of the browser's localStorage, and additionally queues each
+// write for background upsert to Supabase so the data is mirrored to the cloud.
 if (typeof window !== 'undefined' && !window.storage) {
   window.storage = {
     async get(key) {
@@ -14,7 +15,10 @@ if (typeof window !== 'undefined' && !window.storage) {
       } catch (e) { return null; }
     },
     async set(key, value) {
-      try { window.localStorage.setItem(key, value); } catch (e) {}
+      try {
+        window.localStorage.setItem(key, value);
+        queuePush(key, value);
+      } catch (e) {}
     },
     async delete(key) {
       try { window.localStorage.removeItem(key); } catch (e) {}
@@ -53,9 +57,30 @@ export default function App() {
   const prevCompletedRef = useRef({});
   const [loadedDateStr, setLoadedDateStr] = useState(null); // 目前 UI 顯示的是哪一天的資料
 
-  // 初次 mount：載入今天 + 全域統計
+  // 雲端同步狀態
+  const [syncState, setSyncState] = useState({ status: 'idle', uid: null, msg: '' });
+  const [showSyncPanel, setShowSyncPanel] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [restoreInput, setRestoreInput] = useState('');
+
+  // 初次 mount：先雲端同步（pull），再載入今天 + 全域統計
   useEffect(() => {
     const loadData = async () => {
+      // 1) 嘗試匿名登入 + pull 雲端資料（失敗不 block app 運作）
+      try {
+        setSyncState(s => ({ ...s, status: 'syncing' }));
+        await ensureAuth();
+        const { pulled, error } = await pullAll();
+        const uid = await getUserId();
+        setSyncState({
+          status: error ? 'error' : 'ok',
+          uid,
+          msg: error ? `同步失敗：${error.message || '未知錯誤'}` : (pulled > 0 ? `拉取 ${pulled} 筆雲端紀錄` : '已是最新'),
+        });
+      } catch (e) {
+        setSyncState({ status: 'error', uid: null, msg: `雲端連線失敗：${e.message || e}` });
+      }
+      // 2) 讀 localStorage（已可能被 pullAll 刷新）塞入 state
       try {
         const today = new Date().toDateString();
         const sc = await window.storage?.get(`cyber3_completed_${today}`);
@@ -2347,13 +2372,159 @@ export default function App() {
               </div>
             )}
 
-            {/* 隱私小提示 */}
-            <div className="cyber-border-small p-3 text-center" style={{
+            {/* 雲端同步面板 */}
+            <div className="cyber-border-small p-3" style={{
               background: 'rgba(0, 255, 212, 0.03)', border: '1px solid rgba(0, 255, 212, 0.15)'
             }}>
-              <div className="f-wenkai text-[11px] opacity-50" style={{ color: '#e8dfff' }}>
-                ◯ 所有紀錄存於本機瀏覽器 · 清除快取則資料清空
-              </div>
+              <button
+                onClick={() => setShowSyncPanel(v => !v)}
+                className="w-full flex items-center justify-between gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="f-cyber text-[10px] tracking-[0.3em]" style={{
+                    color: syncState.status === 'ok' ? '#00ffd4' : syncState.status === 'syncing' ? '#ffee00' : syncState.status === 'error' ? '#ff00aa' : 'rgba(232, 223, 255, 0.4)'
+                  }}>
+                    ◉ CLOUD
+                  </span>
+                  <span className="f-wenkai text-[11px] opacity-70" style={{ color: '#e8dfff' }}>
+                    {syncState.status === 'ok' && '已連雲端'}
+                    {syncState.status === 'syncing' && '同步中…'}
+                    {syncState.status === 'error' && '離線（本機優先）'}
+                    {syncState.status === 'idle' && '未初始化'}
+                  </span>
+                </div>
+                <span className="f-cyber text-[10px] opacity-50">{showSyncPanel ? '▲' : '▼'}</span>
+              </button>
+
+              {showSyncPanel && (
+                <div className="mt-3 space-y-3 fade-in">
+                  {syncState.msg && (
+                    <div className="f-cyber text-[10px] opacity-60" style={{ color: '#e8dfff' }}>
+                      {syncState.msg}
+                    </div>
+                  )}
+                  {syncState.uid && (
+                    <div className="f-cyber text-[9px] opacity-40 break-all" style={{ color: '#e8dfff' }}>
+                      UID · {syncState.uid}
+                    </div>
+                  )}
+
+                  {/* 顯示恢復碼 */}
+                  <div className="space-y-1.5">
+                    <button
+                      onClick={async () => {
+                        const code = await getRecoveryCode();
+                        setRecoveryCode(code || '（尚未登入）');
+                      }}
+                      className="w-full py-2 text-sm f-cyber btn-neon cyber-border-small"
+                    >
+                      ▸ 顯示恢復碼
+                    </button>
+                    {recoveryCode && (
+                      <div className="p-2 cyber-border-small text-[10px] f-cyber break-all select-all" style={{
+                        background: 'rgba(255, 238, 0, 0.05)',
+                        border: '1px solid rgba(255, 238, 0, 0.3)',
+                        color: '#ffee00',
+                        maxHeight: '120px',
+                        overflowY: 'auto',
+                      }}>
+                        {recoveryCode}
+                      </div>
+                    )}
+                    {recoveryCode && recoveryCode !== '（尚未登入）' && (
+                      <div className="f-wenkai text-[10px] opacity-50" style={{ color: '#e8dfff' }}>
+                        ⚠ 複製後妥善保存 · 換裝置時貼上即可同步全部資料
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 貼上恢復碼 */}
+                  <div className="space-y-1.5">
+                    <textarea
+                      value={restoreInput}
+                      onChange={e => setRestoreInput(e.target.value)}
+                      placeholder="在此貼上恢復碼…"
+                      className="w-full px-2 py-2 text-[10px] f-cyber cyber-border-small"
+                      style={{
+                        background: 'rgba(20, 10, 35, 0.5)',
+                        border: '1px solid rgba(0, 255, 212, 0.15)',
+                        color: '#e8dfff',
+                        minHeight: '60px',
+                        resize: 'vertical',
+                      }}
+                    />
+                    <button
+                      onClick={async () => {
+                        try {
+                          setSyncState(s => ({ ...s, status: 'syncing', msg: '正在恢復…' }));
+                          await restoreFromCode(restoreInput);
+                          const { pulled, error } = await pullAll();
+                          const uid = await getUserId();
+                          setSyncState({
+                            status: error ? 'error' : 'ok',
+                            uid,
+                            msg: error ? `拉取失敗：${error.message}` : `已恢復並拉取 ${pulled} 筆`,
+                          });
+                          setRestoreInput('');
+                          // 重新把 localStorage 資料倒回 state
+                          const today = new Date().toDateString();
+                          const sc = await window.storage?.get(`cyber3_completed_${today}`);
+                          setCompleted(sc ? JSON.parse(sc.value) : {});
+                          const sl = await window.storage?.get(`cyber3_log_${today}`);
+                          setTodayLog(sl ? JSON.parse(sl.value) : { drymouth: null, energy: null, sleep: null, notes: '' });
+                          const ss = await window.storage?.get('cyber3_stats');
+                          if (ss) setStats(JSON.parse(ss.value));
+                          const sa = await window.storage?.get('cyber3_achievements');
+                          if (sa) setUnlockedAchievements(JSON.parse(sa.value));
+                        } catch (e) {
+                          setSyncState(s => ({ ...s, status: 'error', msg: `恢復失敗：${e.message || e}` }));
+                        }
+                      }}
+                      className="w-full py-2 text-sm f-cyber btn-neon-pink cyber-border-small"
+                    >
+                      ▸ 用恢復碼登入
+                    </button>
+                  </div>
+
+                  {/* 立即同步 / 登出 */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          setSyncState(s => ({ ...s, status: 'syncing', msg: '手動同步中…' }));
+                          const { pulled, error } = await pullAll();
+                          const uid = await getUserId();
+                          setSyncState({
+                            status: error ? 'error' : 'ok',
+                            uid,
+                            msg: error ? `失敗：${error.message}` : (pulled > 0 ? `拉取 ${pulled} 筆` : '已是最新'),
+                          });
+                        } catch (e) {
+                          setSyncState(s => ({ ...s, status: 'error', msg: `失敗：${e.message || e}` }));
+                        }
+                      }}
+                      className="flex-1 py-1.5 text-xs f-cyber btn-neon cyber-border-small"
+                    >
+                      ↻ 立即同步
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!confirm('確定要在本機登出嗎？雲端資料不會刪除，但本機會切斷連線。')) return;
+                        await signOutLocal();
+                        setSyncState({ status: 'idle', uid: null, msg: '已登出本機' });
+                        setRecoveryCode('');
+                      }}
+                      className="px-3 py-1.5 text-xs f-cyber btn-neon-pink cyber-border-small"
+                    >
+                      ⎋ 登出
+                    </button>
+                  </div>
+
+                  <div className="f-wenkai text-[10px] opacity-40 pt-1" style={{ color: '#e8dfff' }}>
+                    ◯ 勾選/填寫 → 自動同步雲端 · 換裝置用恢復碼即可還原
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );

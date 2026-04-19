@@ -1,0 +1,114 @@
+# sys.dao 雲端同步設定（Supabase）
+
+這份設定做完一次就好。大約 5 分鐘。
+
+---
+
+## 1. 在 Supabase 建 table
+
+進到 https://supabase.com/dashboard/project/cvbvijdmqpkdbntegmqf/sql/new （SQL Editor）
+
+貼上以下 SQL，然後按右下角 **Run**：
+
+```sql
+-- kv_sync: 每個使用者的 key/value 同步表
+create table if not exists public.kv_sync (
+  user_id    uuid        not null references auth.users(id) on delete cascade,
+  key        text        not null,
+  value      text        not null,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, key)
+);
+
+-- 啟用 Row Level Security（RLS）
+alter table public.kv_sync enable row level security;
+
+-- 政策：使用者只能讀/寫自己的資料
+drop policy if exists "own rows read" on public.kv_sync;
+create policy "own rows read" on public.kv_sync
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "own rows insert" on public.kv_sync;
+create policy "own rows insert" on public.kv_sync
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "own rows update" on public.kv_sync;
+create policy "own rows update" on public.kv_sync
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "own rows delete" on public.kv_sync;
+create policy "own rows delete" on public.kv_sync
+  for delete using (auth.uid() = user_id);
+```
+
+執行後應該會看到 `Success. No rows returned`。
+
+---
+
+## 2. 啟用匿名登入
+
+預設是關的，必須手動開：
+
+1. 進到 https://supabase.com/dashboard/project/cvbvijdmqpkdbntegmqf/auth/providers
+2. 找到 **Anonymous Sign-Ins**（通常在列表最上面附近）
+3. 把 toggle 打開 → Save
+
+這樣 sys.dao 第一次開啟時就會自動幫你建立一個匿名帳號，你完全不用打字。
+
+---
+
+## 3. 安裝前端 dependency
+
+在 sys.dao 專案資料夾裡：
+
+```bash
+npm install
+```
+
+（`package.json` 已經新增了 `@supabase/supabase-js`，所以 `npm install` 會自動裝）
+
+---
+
+## 4. 測試
+
+```bash
+npm run dev
+```
+
+打開後：
+
+- 第一次：自動匿名登入 → 往日 tab 最底下的「◉ CLOUD」會變 cyan（已連雲端）
+- 開 DevTools → Console，不應該有 `[sync] push failed` 錯誤
+- Supabase Dashboard → Table Editor → kv_sync → 應該開始看到你的資料 row
+
+---
+
+## 使用方式
+
+在 sys.dao 裡進「往日」tab，滑到最底：
+
+- **顯示恢復碼** → 複製後妥善保存（這是你換裝置時的「救命稻草」）
+- **貼上恢復碼 → 用恢復碼登入** → 換手機/換電腦時貼上就恢復所有資料
+- **立即同步** → 手動拉一次雲端最新
+- **登出** → 只是切斷本機跟這個雲端帳號的連結，雲端資料不會刪
+
+---
+
+## 疑難排解
+
+| 症狀 | 可能原因 / 解法 |
+|---|---|
+| 「◉ CLOUD」一直紅色（離線） | 檢查 step 2 匿名登入是否開啟 |
+| Console 報 `relation "public.kv_sync" does not exist` | step 1 SQL 沒跑成功，重跑一次 |
+| Console 報 `new row violates row-level security` | RLS policies 沒建好，重跑 step 1 的後半段 |
+| 雲端有資料但恢復不回來 | 檢查恢復碼是否完整複製（很長，有時會漏字） |
+| 想清空雲端全部重來 | SQL Editor 跑：`delete from public.kv_sync where user_id = auth.uid();` |
+
+---
+
+## 安全備註
+
+- `sb_publishable_...` 這把 key 寫在前端是設計上允許的（專給前端用）
+- 真正保護資料的是 **RLS policies** — 沒開 RLS 的話任何人都能讀寫你的資料，務必確認 step 1 跑完
+- 匿名使用者的 refresh token = 你的「恢復碼」，長度約 40 字元，有人拿到就能還原你的全部紀錄，跟密碼一樣要保密
+- 免費 tier 會在「7 天完全無活動」後暫停專案，你每週用一次就永不會被暫停；就算真的暫停，Dashboard 點 Restore 就回來，資料不會掉
