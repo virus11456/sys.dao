@@ -90,7 +90,10 @@ export default function App() {
     })();
   }, [currentTime, loadedDateStr]);
 
+  // ⚠️ 所有 save effect 必須等 loadData 讀完才 fire，否則 React 初始預設值
+  // 會在 mount 時立刻覆寫掉 localStorage 裡已存的真資料（race condition）
   useEffect(() => {
+    if (!loadedDateStr) return;
     const save = async () => {
       try {
         const today = new Date().toDateString();
@@ -98,9 +101,10 @@ export default function App() {
       } catch (e) {}
     };
     if (Object.keys(completed).length > 0) save();
-  }, [completed]);
+  }, [completed, loadedDateStr]);
 
   useEffect(() => {
+    if (!loadedDateStr) return;
     const save = async () => {
       try {
         const today = new Date().toDateString();
@@ -108,21 +112,23 @@ export default function App() {
       } catch (e) {}
     };
     save();
-  }, [todayLog]);
+  }, [todayLog, loadedDateStr]);
 
   useEffect(() => {
+    if (!loadedDateStr) return;
     const save = async () => {
       try { await window.storage?.set('cyber3_stats', JSON.stringify(stats)); } catch (e) {}
     };
     save();
-  }, [stats]);
+  }, [stats, loadedDateStr]);
 
   useEffect(() => {
+    if (!loadedDateStr) return;
     const save = async () => {
       try { await window.storage?.set('cyber3_achievements', JSON.stringify(unlockedAchievements)); } catch (e) {}
     };
     save();
-  }, [unlockedAchievements]);
+  }, [unlockedAchievements, loadedDateStr]);
 
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
